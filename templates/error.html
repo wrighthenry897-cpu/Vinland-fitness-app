@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}{{ code }}{% endblock %}
+{% block content %}
+<section class="panel error-panel"><span class="error-code">{{ code }}</span><h1>{{ 'Hold that thought.' if code == 400 else 'A little off the map.' }}</h1><p>{{ message }}</p><a class="button button-primary" href="{{ url_for('dashboard') if g.user else url_for('login') }}">Back to Vinland <span>→</span></a></section>
+{% endblock %}

@@ -1,0 +1,32 @@
+<div class="movement-demo">
+  <div class="movement-demo-canvas">
+    {% if exercise['demo_id'].startswith('wger_') %}
+    <img
+      class="exercise-demo-photo"
+      src="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '.png') }}"
+      alt="{{ exercise['name'] }} illustrated reference pose"
+      loading="lazy"
+      decoding="async"
+    >
+    <span class="demo-live"><i></i> FORM ILLUSTRATION</span>
+    {% else %}
+    <img
+      class="exercise-demo-photo exercise-demo-sequence"
+      src="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/0.jpg') }}"
+      data-next-frame="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/1.jpg') }}"
+      data-exercise-name="{{ exercise['name'] }}"
+      data-current-frame="0"
+      alt="{{ exercise['name'] }} starting position"
+      loading="lazy"
+      decoding="async"
+    >
+    <span class="demo-live"><i></i> MOVEMENT SEQUENCE</span>
+    <output class="demo-frame-count" aria-live="polite">01 <span>/ 02</span></output>
+    <div class="demo-controls">
+      <button class="demo-step" type="button" aria-label="Show next movement position">↔</button>
+      <button class="demo-toggle" type="button" aria-pressed="false" aria-label="Pause movement demo">Ⅱ</button>
+    </div>
+    {% endif %}
+  </div>
+  <p class="demo-caption"><span>↻</span>{% if exercise['demo_id'].startswith('wger_') %}Study the illustrated position alongside the form cue.{% else %}Starting and finishing positions · pause or step through the demo.{% endif %}</p>
+</div>

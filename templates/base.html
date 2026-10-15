@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#111b19">
+  <meta name="description" content="Vinland — a calmer, clearer way to build strength.">
+  <title>{% block title %}Vinland{% endblock %} · Vinland</title>
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=3) }}">
+  {% block head %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% if g.user %}
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="{{ url_for('dashboard') }}" aria-label="Vinland home">
+        <span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/><path d="M25 7h8v3h-8z" fill="#bdf26c"/></svg></span>
+        <span class="brand-name">vinland<span>.</span></span>
+      </a>
+      <div class="side-label">YOUR SPACE</div>
+      <nav class="side-nav" aria-label="Main navigation">
+        <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}"><span class="nav-icon">⌂</span>Overview</a>
+        <a class="nav-link {% if request.endpoint in ['workout_library', 'workout_guide'] %}active{% endif %}" href="{{ url_for('workout_library') }}"><span class="nav-icon">↟</span>Find workouts</a>
+        <a class="nav-link {% if request.endpoint in ['workout_list', 'new_workout', 'edit_workout'] %}active{% endif %}" href="{{ url_for('workout_list') }}"><span class="nav-icon">▤</span>Training log</a>
+        <a class="nav-link {% if request.endpoint == 'progress' %}active{% endif %}" href="{{ url_for('progress') }}"><span class="nav-icon">⌁</span>Progress</a>
+      </nav>
+      <div class="sidebar-spacer"></div>
+      <div class="side-label">PREFERENCES</div>
+      <nav class="side-nav">
+        <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}"><span class="nav-icon">◎</span>Your profile</a>
+      </nav>
+      <div class="sidebar-card">
+        <span class="sidebar-card-spark">✳</span>
+        <p>Small steps.<br><strong>Stronger you.</strong></p>
+        <span class="sidebar-card-line"></span>
+        <span class="sidebar-card-caption">YOUR PACE IS THE RIGHT PACE</span>
+      </div>
+      <div class="sidebar-user">
+        <div class="avatar">{{ g.user['name'][:1]|upper }}</div>
+        <div class="user-meta"><strong>{{ g.user['name'] }}</strong><span>{{ g.user['email'] }}</span></div>
+        <form action="{{ url_for('logout') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <button class="logout-button" type="submit" aria-label="Sign out" title="Sign out">↗</button>
+        </form>
+      </div>
+    </aside>
+    <main class="main-content">
+      <header class="mobile-header">
+        <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/></svg></span><span class="brand-name">vinland<span>.</span></span></a>
+        <button class="mobile-menu-button" id="menu-toggle" aria-label="Open navigation" aria-expanded="false">☰</button>
+      </header>
+      <div class="page-wrap">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}<div class="flash-stack" role="status">{% for category, message in messages %}<div class="flash flash-{{ category }}"><span>{{ '✓' if category == 'success' else '!' }}</span>{{ message }}<button type="button" class="flash-close" aria-label="Dismiss">×</button></div>{% endfor %}</div>{% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
+{% else %}
+  <main class="auth-shell">
+    <div class="auth-backdrop"></div>
+    <a class="auth-brand brand" href="{{ url_for('login') }}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/><path d="M25 7h8v3h-8z" fill="#bdf26c"/></svg></span><span class="brand-name">vinland<span>.</span></span></a>
+    <div class="auth-layout">
+      <section class="auth-story">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> MADE FOR THE LONG GAME</span>
+        <h1>Build strength.<br><em>Find your north.</em></h1>
+        <p>Your training, your rhythm. A thoughtful space to show up, track the work, and see how far you’ve come.</p>
+        <div class="auth-quote"><span>“</span><div><strong>Progress is a practice.</strong><small>One session at a time.</small></div><div class="quote-lines"></div></div>
+        <div class="auth-deco auth-deco-one"></div><div class="auth-deco auth-deco-two"></div>
+      </section>
+      <section class="auth-card">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash flash-{{ category }}"><span>{{ '✓' if category == 'success' else '!' }}</span>{{ message }}</div>{% endfor %}</div>{% endif %}
+        {% endwith %}
+        {% block auth_content %}{% endblock %}
+      </section>
+    </div>
+    <div class="auth-footer"><span>© {{ today[:4] }} VINLAND</span><span>STRONGER, IN YOUR OWN TIME.</span></div>
+  </main>
+{% endif %}
+<script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

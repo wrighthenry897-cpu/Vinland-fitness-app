@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div class="page-header dashboard-header">
+  <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> {{ today|datetimeformat('%A, %B %d')|upper }}</div><h1>Keep showing up, <em>{{ g.user['name'].split(' ')[0] }}.</em></h1><p class="page-subtitle">Every session is a step in the right direction.</p></div>
+  <a class="button button-primary" href="{{ url_for('workout_library') }}"><span class="plus">＋</span> Find a workout</a>
+</div>
+<section class="stat-grid" aria-label="Your weekly stats">
+  <article class="stat-card"><div class="stat-top"><span class="stat-label">SESSIONS THIS WEEK</span><span class="stat-icon mint-icon">▤</span></div><div class="stat-value">{{ stats['sessions'] }}<small> / 7 days</small></div><div class="stat-foot"><span class="stat-foot-dot"></span> {{ total_workouts }} total sessions logged</div></article>
+  <article class="stat-card"><div class="stat-top"><span class="stat-label">TRAINING VOLUME</span><span class="stat-icon peach-icon">↗</span></div><div class="stat-value">{{ "{:,.0f}".format(stats['volume']) }}<small> kg moved</small></div><div class="stat-foot">Across all your lifts this week</div></article>
+  <article class="stat-card"><div class="stat-top"><span class="stat-label">CURRENT STREAK</span><span class="stat-icon violet-icon">✳</span></div><div class="stat-value">{{ streak }}<small> {{ 'day' if streak == 1 else 'days' }}</small></div><div class="stat-foot">{% if streak %}<span class="stat-foot-dot"></span> Momentum looks good{% else %}Your next session starts a new one{% endif %}</div></article>
+  <article class="stat-card weight-stat"><div class="stat-top"><span class="stat-label">YOUR WEIGHT GOAL</span><span class="stat-icon blue-icon">◎</span></div>{% if g.user['current_weight'] and g.user['target_weight'] %}<div class="stat-value">{{ "%.1f"|format(g.user['current_weight']) }}<small> → {{ "%.1f"|format(g.user['target_weight']) }} kg</small></div><div class="stat-foot"><a href="{{ url_for('profile') }}">Update your progress <span>→</span></a></div>{% else %}<div class="stat-value stat-value-empty">Set a goal<small> to track progress</small></div><div class="stat-foot"><a href="{{ url_for('profile') }}">Add your weight goal <span>→</span></a></div>{% endif %}</article>
+</section>
+<div class="dashboard-grid">
+  <section class="panel volume-panel">
+    <div class="panel-heading"><div><span class="panel-overline">THE BIG PICTURE</span><h2>Your week, in motion</h2></div><span class="period-pill"><span></span> LAST 7 DAYS</span></div>
+    <div class="chart-summary"><strong>{{ "{:,.0f}".format(stats['volume']) }} <small>kg</small></strong><span>Total volume</span></div>
+    <div class="chart-wrap chart-wrap-week"><canvas id="volume-chart" aria-label="Bar chart of your training volume over the last seven days"></canvas></div>
+    <div class="chart-labels">{% for day in chart_days %}<span>{{ day.label }}</span>{% endfor %}</div>
+    <script id="chart-data" type="application/json">{{ chart_days|tojson }}</script>
+  </section>
+  <section class="panel weekly-panel">
+    <div class="panel-heading"><div><span class="panel-overline">YOUR CONSISTENCY</span><h2>Good things take reps.</h2></div><span class="sun-symbol">✳</span></div>
+    <div class="week-ring-row"><div class="week-ring" style="--progress: {{ [stats['sessions'] * 14.285, 100]|min }}%"><div><strong>{{ stats['sessions'] }}</strong><span>SESSIONS</span></div></div><div class="week-copy"><strong>{{ 'You’re building a habit.' if stats['sessions'] else 'Your week is a blank canvas.' }}</strong><span>{{ 'Keep your rhythm going — it adds up.' if stats['sessions'] else 'One session is all it takes to begin.' }}</span></div></div>
+    <div class="week-days">{% for day in chart_days %}<div class="week-day"><span>{{ day.label[:1] }}</span><i class="{% if day.sessions %}day-done{% endif %}" title="{{ day.date }}{{ ' — workout logged' if day.sessions else '' }}"></i></div>{% endfor %}</div>
+    <a class="text-link" href="{{ url_for('progress') }}">See your full progress <span>→</span></a>
+  </section>
+</div>
+<section class="panel recent-panel">
+  <div class="panel-heading recent-heading"><div><span class="panel-overline">YOUR TRAINING LOG</span><h2>Recent sessions</h2></div><a class="text-link" href="{{ url_for('workout_list') }}">View all <span>→</span></a></div>
+  {% if recent %}
+  <div class="recent-list">{% for workout in recent %}<a class="recent-row" href="{{ url_for('edit_workout', workout_id=workout['id']) }}"><span class="recent-date">{{ workout['workout_date']|datetimeformat('%d') }}<small>{{ workout['workout_date']|datetimeformat('%b')|upper }}</small></span><span class="recent-name"><strong>{{ workout['title'] }}</strong><small>{{ workout['workout_date']|datetimeformat('%A, %B %d') }}</small></span><span class="recent-duration">{{ workout['duration'] }} <small>min</small></span><span class="recent-arrow">↗</span></a>{% endfor %}</div>
+  {% else %}
+  <div class="empty-state"><div class="empty-illustration"><span>✳</span></div><strong>Your first session is waiting.</strong><p>Log a workout and start building your story.</p><a class="button button-soft" href="{{ url_for('new_workout') }}">Log your first workout <span>→</span></a></div>
+  {% endif %}
+</section>
+<div class="dashboard-footer-note"><span>✳</span> You don’t have to be extreme, just consistent.</div>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>{% endblock %}

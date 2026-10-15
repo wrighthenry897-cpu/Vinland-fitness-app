@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Find a workout{% endblock %}
+{% block content %}
+<section class="library-hero">
+  <div class="library-hero-copy">
+    <span class="eyebrow library-eyebrow"><span class="eyebrow-dot"></span> YOUR NEXT SESSION STARTS HERE</span>
+    <h1>Pick a focus.<br><em>We’ll guide the rest.</em></h1>
+    <p>Choose what you want to work on, then follow clear movement cues and in-app exercise demos at your own pace.</p>
+    <a class="button button-primary" href="#workout-finder">Explore workouts <span>↓</span></a>
+  </div>
+  <div class="library-hero-art" aria-hidden="true">
+    <span class="hero-art-label">TRAINING / {{ today|datetimeformat('%Y') }}</span>
+    <div class="hero-orbit hero-orbit-one"></div><div class="hero-orbit hero-orbit-two"></div>
+    <span class="hero-art-symbol">V</span><span class="hero-art-star">✳</span>
+    <span class="hero-art-caption">ONE REP AT A TIME</span>
+  </div>
+</section>
+
+<section class="library-section" id="workout-finder">
+  <div class="library-section-title">
+    <div><span class="panel-overline">BUILT AROUND YOU</span><h2>What would you like to train?</h2></div>
+    <span class="library-count">06 FOCUSES</span>
+  </div>
+  <form class="library-filters" action="{{ url_for('workout_library') }}" method="get">
+    <label><span>FOCUS AREA</span><select name="focus"><option value="all" {% if selected_focus == 'all' %}selected{% endif %}>All areas</option>{% for slug, focus in focuses.items() %}<option value="{{ slug }}" {% if selected_focus == slug %}selected{% endif %}>{{ focus.name }}</option>{% endfor %}</select></label>
+    <label><span>YOUR LEVEL</span><select name="level"><option value="beginner" {% if selected_level == 'beginner' %}selected{% endif %}>Beginner</option><option value="intermediate" {% if selected_level == 'intermediate' %}selected{% endif %}>Intermediate</option></select></label>
+    <label><span>EQUIPMENT</span><select name="equipment"><option value="bodyweight" {% if selected_equipment == 'bodyweight' %}selected{% endif %}>Home · no equipment</option><option value="gym" {% if selected_equipment == 'gym' %}selected{% endif %}>Gym equipment</option></select></label>
+    <button class="button button-soft" type="submit">Show workouts <span>→</span></button>
+  </form>
+  <div class="focus-grid">
+    {% for slug, focus in focuses.items() if selected_focus == 'all' or selected_focus == slug %}
+    <article class="focus-card focus-{{ focus.color }}">
+      <div class="focus-card-top"><span class="focus-icon">{{ focus.icon }}</span><span class="focus-kicker">{{ focus.short }} / VINLAND</span></div>
+      <h3>{{ focus.name }}</h3><p>{{ focus.description }}</p>
+      <div class="focus-card-meta"><span>◷ &nbsp;{{ focus.duration + (5 if selected_level == 'intermediate' else 0) }} min</span><span>▤ &nbsp;5 movements</span><span>{{ selected_level|title }}</span></div>
+      <a class="focus-card-link" href="{{ url_for('workout_guide', focus=slug, level=selected_level, equipment=selected_equipment) }}">See this workout <span>↗</span></a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<aside class="library-safety"><span>◎</span><div><strong>Make it work for your body.</strong><p>Move at a comfortable pace, take breaks when you need them, and stop if something hurts. Adjust or skip any movement.</p></div></aside>
+{% endblock %}

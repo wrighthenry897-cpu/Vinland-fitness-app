@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Workouts{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> THE WORK ADDS UP</div><h1>Your training <em>log.</em></h1><p class="page-subtitle">A record of every time you showed up for yourself.</p></div>
+  <a class="button button-primary" href="{{ url_for('new_workout') }}"><span class="plus">＋</span> Log a workout</a>
+</div>
+<section class="panel log-panel">
+  <div class="panel-heading"><div><span class="panel-overline">ALL SESSIONS</span><h2>{{ workouts|length }} {{ 'session' if workouts|length == 1 else 'sessions' }} logged</h2></div><span class="log-total-mark">VINLAND / LOG</span></div>
+  {% if workouts %}
+  <div class="table-head"><span>WORKOUT</span><span>EXERCISES</span><span>VOLUME</span><span>DURATION</span><span></span></div>
+  <div class="workout-list">{% for workout in workouts %}
+    <article class="workout-row">
+      <span class="recent-date">{{ workout['workout_date']|datetimeformat('%d') }}<small>{{ workout['workout_date']|datetimeformat('%b')|upper }}</small></span>
+      <div class="workout-row-title"><strong>{{ workout['title'] }}</strong><span>{{ workout['workout_date']|datetimeformat('%A, %B %d, %Y') }}</span>{% if workout['notes'] %}<small class="row-note">{{ workout['notes'] }}</small>{% endif %}</div>
+      <span class="row-metric">{{ workout['exercise_count'] }} <small>{{ 'exercise' if workout['exercise_count'] == 1 else 'exercises' }}</small></span>
+      <span class="row-metric">{{ "{:,.0f}".format(workout['volume']) }} <small>kg</small></span>
+      <span class="row-metric">{{ workout['duration'] }} <small>min</small></span>
+      <div class="row-actions"><a href="{{ url_for('edit_workout', workout_id=workout['id']) }}" aria-label="Edit {{ workout['title'] }}">Edit</a><form action="{{ url_for('delete_workout', workout_id=workout['id']) }}" method="post" data-confirm="Delete this workout and its exercises?"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit" aria-label="Delete {{ workout['title'] }}">×</button></form></div>
+    </article>
+  {% endfor %}</div>
+  {% else %}
+  <div class="empty-state empty-state-large"><div class="empty-illustration"><span>▤</span></div><strong>No workouts yet. That’s about to change.</strong><p>Start a log to keep your training consistent and your progress visible.</p><a class="button button-primary" href="{{ url_for('new_workout') }}">Log your first workout <span>→</span></a></div>
+  {% endif %}
+</section>
+{% endblock %}

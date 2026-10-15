@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Progress{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> LOOK HOW FAR YOU’VE COME</div><h1>Progress, <em>not perfection.</em></h1><p class="page-subtitle">Little by little, you’re becoming stronger.</p></div>
+  <a class="button button-soft" href="{{ url_for('workout_list') }}">View workout log <span>→</span></a>
+</div>
+<section class="stat-grid progress-stats">
+  <article class="stat-card"><div class="stat-top"><span class="stat-label">SESSIONS</span><span class="stat-icon mint-icon">▤</span></div><div class="stat-value">{{ totals['sessions'] }}<small> / 30 days</small></div><div class="stat-foot">You made time for yourself</div></article>
+  <article class="stat-card"><div class="stat-top"><span class="stat-label">EXERCISES LOGGED</span><span class="stat-icon peach-icon">↗</span></div><div class="stat-value">{{ totals['exercises'] }}<small> movements</small></div><div class="stat-foot">Each one a little stronger</div></article>
+  <article class="stat-card"><div class="stat-top"><span class="stat-label">TOTAL VOLUME</span><span class="stat-icon violet-icon">✳</span></div><div class="stat-value">{{ "{:,.0f}".format(totals['volume']) }}<small> kg moved</small></div><div class="stat-foot">Across your last 30 days</div></article>
+</section>
+<section class="panel progress-chart-panel">
+  <div class="panel-heading"><div><span class="panel-overline">YOUR TRAINING RHYTHM</span><h2>Volume over the last 30 days</h2></div><span class="period-pill"><span></span> 30 DAYS</span></div>
+  <div class="progress-chart-total"><strong>{{ "{:,.0f}".format(totals['volume']) }} <small>kg</small></strong><span>total training volume</span></div>
+  <div class="chart-wrap chart-wrap-month"><canvas id="progress-chart" aria-label="Line chart of training volume over the last 30 days"></canvas></div>
+  <div class="chart-month-labels"><span>{{ days[0].date }}</span><span>{{ days[7].date }}</span><span>{{ days[14].date }}</span><span>{{ days[21].date }}</span><span>{{ days[-1].date }}</span></div>
+  <script id="chart-data" type="application/json">{{ days|tojson }}</script>
+</section>
+<section class="progress-note"><span class="progress-note-mark">✳</span><div><strong>Consistency is its own kind of strength.</strong><p>Some days you’ll lift more. Some days you’ll just show up. Both count.</p></div></section>
+{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>{% endblock %}

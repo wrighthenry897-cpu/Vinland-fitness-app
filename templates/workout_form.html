@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit workout' if mode == 'edit' else 'Log a workout' }}{% endblock %}
+{% block content %}
+<div class="page-header form-page-header">
+  <div><a class="back-link" href="{{ url_for('workout_list') }}">← Back to workouts</a><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> {{ 'MAKE IT YOURS' if mode == 'edit' else 'ONE SESSION AT A TIME' }}</div><h1>{{ 'Edit your ' ~ workout['title'] if mode == 'edit' else 'Log the <em>work.</em>'|safe }}</h1><p class="page-subtitle">{{ 'Adjust the details or exercises below.' if mode == 'edit' else 'Capture the details. You’ve earned the record.' }}</p></div>
+</div>
+<form method="post" class="workout-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <section class="panel form-panel">
+    <div class="form-section-heading"><span class="form-section-number">01</span><div><h2>Session details</h2><p>Start with the essentials.</p></div></div>
+    <div class="form-grid">
+      <div class="form-field form-field-wide"><label for="title">Workout name</label><input id="title" name="title" type="text" placeholder="e.g. Upper body strength" maxlength="80" required value="{{ workout['title']|default('') }}"></div>
+      <div class="form-field"><label for="workout_date">Date</label><input id="workout_date" name="workout_date" type="date" max="{{ today }}" required value="{{ workout['workout_date']|default(today) }}"></div>
+      <div class="form-field"><label for="duration">Duration <span>MIN</span></label><div class="input-suffix"><input id="duration" name="duration" type="number" min="1" max="600" placeholder="45" required value="{{ workout['duration']|default('') }}"><span>min</span></div></div>
+      <div class="form-field form-field-wide"><label for="notes">Notes <span>OPTIONAL</span></label><textarea id="notes" name="notes" rows="3" maxlength="1000" placeholder="How did it feel? Anything you want to remember?">{{ workout['notes']|default('') }}</textarea></div>
+    </div>
+  </section>
+  <section class="panel form-panel exercise-form-panel">
+    <div class="form-section-heading"><span class="form-section-number">02</span><div><h2>The movements</h2><p>Log your exercises, sets, reps, and weight.</p></div></div>
+    <div class="exercise-head"><span>EXERCISE</span><span>SETS</span><span>REPS</span><span>WEIGHT · KG</span><span></span></div>
+    <div id="exercise-rows">
+    {% for exercise in exercises %}
+      <div class="exercise-entry">
+        <div><label class="sr-only" for="exercise-name-{{ loop.index }}">Exercise name</label><input id="exercise-name-{{ loop.index }}" name="exercise_name[]" type="text" maxlength="80" placeholder="e.g. Barbell squat" value="{{ exercise['name']|default('') }}"></div>
+        <div><label class="sr-only" for="exercise-sets-{{ loop.index }}">Sets</label><input id="exercise-sets-{{ loop.index }}" name="exercise_sets[]" type="number" min="1" max="100" placeholder="3" value="{{ exercise['sets']|default('') }}"></div>
+        <div><label class="sr-only" for="exercise-reps-{{ loop.index }}">Reps</label><input id="exercise-reps-{{ loop.index }}" name="exercise_reps[]" type="number" min="1" max="1000" placeholder="10" value="{{ exercise['reps']|default('') }}"></div>
+        <div><label class="sr-only" for="exercise-weight-{{ loop.index }}">Weight in kilograms</label><input id="exercise-weight-{{ loop.index }}" name="exercise_weight[]" type="number" min="0" max="2000" step="0.5" placeholder="0" value="{{ exercise['weight']|default('') }}"></div>
+        <button class="remove-exercise" type="button" aria-label="Remove exercise">×</button>
+      </div>
+    {% endfor %}
+    </div>
+    <button id="add-exercise" class="add-exercise" type="button"><span>＋</span> Add another exercise</button>
+    <template id="exercise-template"><div class="exercise-entry"><div><label class="sr-only">Exercise name</label><input name="exercise_name[]" type="text" maxlength="80" placeholder="e.g. Barbell squat"></div><div><label class="sr-only">Sets</label><input name="exercise_sets[]" type="number" min="1" max="100" placeholder="3"></div><div><label class="sr-only">Reps</label><input name="exercise_reps[]" type="number" min="1" max="1000" placeholder="10"></div><div><label class="sr-only">Weight in kilograms</label><input name="exercise_weight[]" type="number" min="0" max="2000" step="0.5" placeholder="0"></div><button class="remove-exercise" type="button" aria-label="Remove exercise">×</button></div></template>
+  </section>
+  <div class="form-actions"><a class="button button-quiet" href="{{ url_for('workout_list') }}">Cancel</a><button class="button button-primary" type="submit">{{ 'Save changes' if mode == 'edit' else 'Save workout' }} <span>→</span></button></div>
+</form>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Create account' if mode == 'register' else 'Sign in' }}{% endblock %}
+{% block body_class %}auth-page{% endblock %}
+{% block auth_content %}
+  <div class="auth-card-top"><span class="auth-kicker">{{ 'YOUR NEXT CHAPTER' if mode == 'register' else 'WELCOME BACK' }}</span><span class="auth-step">{{ '01 / 01' if mode == 'register' else '✳' }}</span></div>
+  <h2>{{ 'Start your journey.' if mode == 'register' else 'Good to see you.' }}</h2>
+  <p class="auth-subtitle">{{ 'Create your free account and make room for progress.' if mode == 'register' else 'Pick up right where you left off.' }}</p>
+  <form method="post" class="auth-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% if mode == 'register' %}
+    <label for="name">Your name</label>
+    <input id="name" name="name" type="text" placeholder="e.g. Alex Morgan" autocomplete="name" maxlength="60" required value="{{ request.form.get('name', '') }}">
+    {% endif %}
+    <label for="email">Email address</label>
+    <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" maxlength="254" required value="{{ request.form.get('email', '') }}">
+    <div class="label-row"><label for="password">Password</label>{% if mode == 'login' %}<span>At least 8 characters</span>{% endif %}</div>
+    <div class="password-wrap"><input id="password" name="password" type="password" placeholder="{{ 'Create a password' if mode == 'register' else 'Enter your password' }}" autocomplete="{{ 'new-password' if mode == 'register' else 'current-password' }}" minlength="8" maxlength="128" required><button type="button" class="password-toggle" aria-label="Show password">SHOW</button></div>
+    {% if mode == 'register' %}<small class="field-hint">Use at least 8 characters. Your training data stays private.</small>{% endif %}
+    <button class="button button-primary button-wide auth-submit" type="submit">{{ 'Create my account' if mode == 'register' else 'Sign in to Vinland' }} <span>→</span></button>
+  </form>
+  <div class="auth-switch">{{ 'Already have an account?' if mode == 'register' else 'New to Vinland?' }} <a href="{{ url_for('login' if mode == 'register' else 'register') }}">{{ 'Sign in' if mode == 'register' else 'Create an account' }} <span>↗</span></a></div>
+  <div class="auth-privacy"><span>⌑</span> Your data is private, always.</div>
+{% endblock %}

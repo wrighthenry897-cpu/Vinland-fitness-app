@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Your profile{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> YOUR SPACE, YOUR PACE</div><h1>A little about <em>you.</em></h1><p class="page-subtitle">Make Vinland yours. Update your details and personal goals.</p></div>
+</div>
+<div class="profile-layout">
+  <section class="panel profile-card">
+    <div class="profile-avatar">{{ g.user['name'][:1]|upper }}</div>
+    <span class="panel-overline">YOUR ACCOUNT</span>
+    <h2>{{ g.user['name'] }}</h2>
+    <p>{{ g.user['email'] }}</p>
+    <div class="profile-private"><span>⌑</span> Your details are only visible to you.</div>
+  </section>
+  <section class="panel form-panel profile-form-panel">
+    <div class="form-section-heading"><span class="form-section-number">✳</span><div><h2>Personal details</h2><p>Keep your goals current — you’re in control.</p></div></div>
+    <form method="post" class="profile-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="form-field"><label for="name">Your name</label><input id="name" name="name" type="text" maxlength="60" required value="{{ g.user['name'] }}"></div>
+      <div class="form-field"><label for="email">Email address</label><input id="email" type="email" value="{{ g.user['email'] }}" disabled><small class="field-hint">Email changes aren’t available yet.</small></div>
+      <div class="form-grid profile-weights">
+        <div class="form-field"><label for="current_weight">Current weight <span>OPTIONAL</span></label><div class="input-suffix"><input id="current_weight" name="current_weight" type="number" min="20" max="500" step="0.1" placeholder="—" value="{{ g.user['current_weight'] or '' }}"><span>kg</span></div></div>
+        <div class="form-field"><label for="target_weight">Target weight <span>OPTIONAL</span></label><div class="input-suffix"><input id="target_weight" name="target_weight" type="number" min="20" max="500" step="0.1" placeholder="—" value="{{ g.user['target_weight'] or '' }}"><span>kg</span></div></div>
+      </div>
+      <div class="profile-weight-note"><span>◎</span> Weight is personal. It’s never shared or shown anywhere public.</div>
+      <div class="form-actions profile-actions"><button class="button button-primary" type="submit">Save changes <span>→</span></button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -574,3 +574,128 @@ button { color: inherit; }
   .demo-controls { right: 8px; bottom: 8px; }
   .demo-toggle, .demo-step { width: 32px; height: 32px; }
 }
+.movement-demo-canvas { isolation: isolate; }
+.exercise-demo-photo, .exercise-demo-transition { position: relative; z-index: 0; }
+.exercise-demo-transition { position: absolute; inset: 0; z-index: 1; opacity: 0; transition: opacity .85s ease-in-out; pointer-events: none; }
+.exercise-demo-transition.is-visible { opacity: 1; }
+.guided-player { margin: 12px 0; padding: 20px; overflow: hidden; border-color: #e3ebdc; background: linear-gradient(145deg, #fff, #f5f8f1); }
+.player-ready { display: grid; justify-items: start; gap: 9px; }
+.player-kicker { color: #81916f; font-size: 9px; font-weight: 700; letter-spacing: 1.25px; }
+.player-ready h2 { margin: 0; font-family: "Manrope", sans-serif; font-size: 18px; letter-spacing: -.6px; }
+.player-ready p { margin: 0 0 4px; color: #849087; font-size: 10px; line-height: 1.5; }
+.player-active { display: grid; gap: 13px; }
+.player-progress-row { display: flex; justify-content: space-between; color: #728266; font-size: 9px; font-weight: 700; letter-spacing: .8px; }
+.player-progress { height: 5px; overflow: hidden; border-radius: 5px; background: #e9eee5; }
+.player-progress > span { display: block; width: 0; height: 100%; border-radius: inherit; background: #a5cf72; transition: width .35s ease; }
+.player-exercise { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(170px, .9fr); align-items: center; gap: 17px; }
+.player-demo { position: relative; overflow: hidden; aspect-ratio: 3 / 2; border-radius: 11px; background: #e8ece5; }
+.player-demo img { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 1; transition: opacity .22s ease; }
+.player-demo img.is-changing { opacity: .35; }
+.player-demo > span { position: absolute; right: 8px; bottom: 8px; padding: 5px 7px; border-radius: 12px; color: white; background: rgba(24,35,29,.75); font-size: 8px; font-weight: 700; }
+.player-instructions h2 { margin: 6px 0; font-family: "Manrope", sans-serif; font-size: 17px; letter-spacing: -.5px; }
+.player-instructions > p { margin: 0; color: #78857c; font-size: 10px; line-height: 1.55; }
+.player-clock { margin-top: 8px; color: #526b41; font-family: "Manrope", sans-serif; font-size: clamp(34px, 6vw, 48px); font-weight: 700; letter-spacing: -2px; line-height: 1; font-variant-numeric: tabular-nums; }
+.player-instructions .player-status { min-height: 30px; margin-top: 6px; color: #869187; }
+.player-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.player-controls .button { min-height: 36px; font-size: 10px; }
+.voice-toggle, .player-end { padding: 8px 10px; border: 0; border-radius: 7px; color: #627650; background: #eef3e8; cursor: pointer; font-size: 9px; font-weight: 700; }
+.voice-toggle[aria-pressed="false"], .voice-toggle:disabled { color: #8b9690; background: #f0f2ef; cursor: default; }
+.player-end { margin-left: auto; color: #9a6d60; background: #fff2ec; }
+.exercise-demo-photo { transition: opacity .2s ease; }
+[hidden] { display: none !important; }
+@media (max-width: 600px) {
+  .guided-player { padding: 14px; }
+  .player-exercise { grid-template-columns: 1fr; gap: 12px; }
+  .player-demo { max-height: 245px; }
+  .player-controls { gap: 6px; }
+  .player-end { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .exercise-demo-transition, .player-demo img, .player-progress > span { transition: none; }
+}
+.guide-layout { display: block; max-width: 1050px; margin: 0 auto; }
+.guide-main { width: 100%; }
+.guide-header { max-width: 1050px; margin-right: auto; margin-left: auto; }
+.guided-player { display: grid; gap: 18px; margin: 0; padding: clamp(18px, 3vw, 34px); border: 1px solid #e9ede5; border-radius: 22px; background: #fff; box-shadow: 0 20px 65px rgba(26,43,35,.07); }
+.player-topline { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding-bottom: 17px; border-bottom: 1px solid #edf0eb; }
+.player-workout-name { display: grid; gap: 8px; }
+.player-workout-name a { width: max-content; color: #879187; font-size: 11px; font-weight: 600; }
+.player-workout-name a:hover { color: #526b41; }
+.player-workout-name strong { color: #1c2925; font-family: "Manrope", sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -.45px; }
+.player-workout-name > span, .player-total-time { color: #77836f; font-size: 10px; font-weight: 700; letter-spacing: 1px; }
+.player-total-time { padding: 8px 11px; border-radius: 30px; background: #f4f6f0; letter-spacing: 0; }
+.player-progress-row { color: #637a50; font-size: 10px; letter-spacing: 1px; }
+.player-progress-row > span:last-child { color: #89938b; }
+.player-progress { display: flex; height: 5px; gap: 5px; overflow: visible; border-radius: 0; background: transparent; }
+.player-progress > span { flex: 1; height: 5px; border-radius: 5px; background: #edf0eb; transition: background .3s ease, transform .3s ease; }
+.player-progress > span.is-current { background: #a8ce7d; transform: scaleY(1.45); }
+.player-progress > span.is-complete { background: #637e4c; }
+.player-exercise { grid-template-columns: minmax(0, 1.08fr) minmax(300px, .92fr); gap: clamp(20px, 4vw, 50px); align-items: center; }
+.player-demo { width: 100%; max-height: 530px; aspect-ratio: 1 / 1.03; border-radius: 18px; background: #edf0ea; box-shadow: 0 8px 26px rgba(24,39,29,.1); isolation: isolate; }
+.player-demo img { position: absolute; inset: 0; transform: scale(1.045); opacity: 0; transition: opacity 1.15s cubic-bezier(.22,.61,.36,1), transform 2.5s cubic-bezier(.22,.61,.36,1); will-change: opacity, transform; }
+.player-demo img.is-current { transform: scale(1); opacity: 1; }
+.player-demo > .player-demo-label { position: absolute; z-index: 2; top: 13px; right: auto; bottom: auto; left: 13px; display: inline-flex; align-items: center; gap: 8px; padding: 8px 11px; border: 1px solid rgba(255,255,255,.55); border-radius: 24px; color: #425044; background: rgba(255,255,255,.9); font-size: 9px; font-weight: 700; letter-spacing: .9px; backdrop-filter: blur(10px); }
+.player-demo-label i { width: 7px; height: 7px; border-radius: 50%; background: #98c36f; box-shadow: 0 0 0 3px rgba(152,195,111,.19); }
+.player-instructions { min-width: 0; }
+.player-instructions > .panel-overline { color: #859375; font-size: 10px; letter-spacing: 1.2px; }
+.player-instructions h2 { margin: 10px 0 9px; color: #1c2925; font-size: clamp(26px, 3vw, 34px); line-height: 1.12; letter-spacing: -1.2px; }
+.player-instructions > p { color: #78857c; font-size: 14px; line-height: 1.65; }
+.player-set-label { margin-top: 15px; color: #75816f; font-size: 11px; font-weight: 700; letter-spacing: .55px; }
+.player-timer-row { display: flex; align-items: center; gap: 17px; margin: 20px 0 17px; }
+.player-countdown { position: relative; flex: 0 0 122px; width: 122px; height: 122px; color: #30432e; }
+.player-countdown > svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.player-countdown circle { fill: none; stroke-width: 7px; }
+.timer-track { stroke: #edf0e9; }
+.timer-ring { stroke: #98bd6d; stroke-linecap: round; stroke-dasharray: 490.09; stroke-dashoffset: 490.09; transition: stroke-dashoffset .85s linear, stroke .3s ease; }
+.timer-ring.is-done { stroke: #617e4c; }
+.player-countdown > span { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 3px; }
+.player-countdown strong { font-family: "Manrope", sans-serif; font-size: 26px; font-weight: 700; letter-spacing: -1.1px; font-variant-numeric: tabular-nums; }
+.player-countdown small { color: #8b958a; font-size: 8px; font-weight: 700; letter-spacing: 1.3px; }
+.player-instructions .player-status { min-height: 40px; margin: 0; color: #8b958d; font-size: 11px; line-height: 1.5; }
+.player-controls { gap: 9px; }
+.player-controls .button { min-height: 47px; padding-right: 16px; padding-left: 16px; font-size: 11px; }
+.player-controls .button-primary { min-width: 145px; }
+.voice-toggle { min-height: 39px; padding: 0 11px; color: #596d4a; background: #f0f4ea; font-size: 10px; }
+.player-end { min-height: 38px; margin-left: auto; padding: 0 11px; font-size: 10px; }
+.player-footer { display: flex; justify-content: space-between; gap: 10px; padding-top: 15px; border-top: 1px solid #edf0eb; color: #89948b; font-size: 9px; font-weight: 700; letter-spacing: .8px; }
+.player-footer i { margin: 0 3px; color: #b2b9b1; font-style: normal; }
+.player-exercise.is-complete .player-demo img { filter: saturate(.6); }
+.player-exercise.is-complete .player-countdown { color: #617e4c; }
+.guided-player.is-resting { background: linear-gradient(145deg, #fff, #f4f7ef); }
+.plan-details { margin: 14px 0 0; border: 1px solid #e9ede5; border-radius: 12px; background: #fff; }
+.plan-details > summary { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 15px 17px; color: #48574c; cursor: pointer; font-size: 12px; font-weight: 700; list-style: none; }
+.plan-details > summary::-webkit-details-marker { display: none; }
+.plan-details > summary::after { content: "+"; color: #78945e; font-size: 20px; font-weight: 400; }
+.plan-details[open] > summary::after { content: "−"; }
+.plan-details > summary > span { margin-left: auto; color: #98a197; font-size: 10px; font-weight: 500; }
+.plan-safety { margin: 0; padding: 0 17px 12px; color: #849087; font-size: 11px; line-height: 1.5; }
+.plan-details .guided-movements { padding: 0 12px; }
+.plan-details .guided-finish { margin: 12px; }
+.plan-details .movement-demo-canvas { width: min(100%, 390px); }
+@media (max-width: 760px) {
+  .player-exercise { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .player-demo { max-height: 440px; aspect-ratio: 1.28 / 1; }
+  .player-instructions h2 { font-size: 29px; }
+  .player-timer-row { margin: 16px 0; }
+}
+@media (max-width: 600px) {
+  .guided-player { gap: 15px; padding: 15px; border-radius: 16px; }
+  .player-workout-name > span { font-size: 8px; letter-spacing: .8px; }
+  .player-workout-name { gap: 5px; }
+  .player-workout-name strong { font-size: 15px; }
+  .player-total-time { padding: 7px 9px; font-size: 9px; }
+  .player-demo { max-height: 230px; aspect-ratio: 1.3 / 1; border-radius: 13px; }
+  .player-instructions h2 { font-size: 27px; }
+  .player-instructions > p { font-size: 13px; }
+  .player-countdown { flex-basis: 104px; width: 104px; height: 104px; }
+  .player-countdown strong { font-size: 23px; }
+  .player-controls { display: grid; grid-template-columns: 1fr 1fr; }
+  .player-controls .button-primary { min-width: 0; }
+  .player-end { margin-left: 0; }
+  .player-footer { font-size: 8px; letter-spacing: .45px; }
+  .plan-details > summary { font-size: 11px; }
+  .plan-details > summary > span { font-size: 9px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .player-demo img, .player-progress > span, .timer-ring { transition: none; }
+}

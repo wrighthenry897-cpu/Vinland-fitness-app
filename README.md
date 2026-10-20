@@ -7,8 +7,9 @@ Vinland is a responsive workout coach and fitness-training journal built with Fl
 - Private accounts with salted password hashing and signed sessions.
 - CSRF protection on every form submission.
 - Create, edit, and delete workouts with multiple exercises, duration, dates, and notes.
-- Guided beginner and intermediate routines for abs/core, chest, back, arms, legs/glutes, and full body.
-- Home/bodyweight or gym exercise variations, step-by-step form cues, bundled two-position human exercise demos with play/pause/step controls, and rest timers.
+- Guided, equipment-free beginner and intermediate routines for abs/core, chest, back, arms, legs/glutes, and full body.
+- A timed workout player with repeating set countdowns, rest timers, spoken form cues, pause/skip controls, and automatic progression through the full session.
+- Bundled two-position human exercise demos with smooth cross-fades, plus manual step-through controls.
 - Mark completed movements and save the guided session directly to your training log; the saved time is adjusted to the movements completed.
 - Personal dashboard with weekly sessions, lifting volume, workout streak, and recent sessions.
 - 30-day training progress chart and private profile/weight goals.

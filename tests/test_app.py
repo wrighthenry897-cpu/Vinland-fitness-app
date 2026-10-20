@@ -195,6 +195,10 @@ class VinlandAppTests(unittest.TestCase):
         self.assertIn(b"exercise-demos/Dead_Bug/1.jpg", guide.data)
         self.assertIn(b"Pause movement demo", guide.data)
         self.assertIn(b"Demo artwork credits", guide.data)
+        self.assertIn(b"Start guided workout", guide.data)
+        self.assertIn(b"Voice on", guide.data)
+        self.assertIn(b"data-duration=\"30\"", guide.data)
+        self.assertIn(b"NO EQUIPMENT", guide.data)
         self.assertNotIn(b"exercise-illustration", guide.data)
         self.assertNotIn(b"youtube", guide.data.lower())
         self.assertIn(b"Mark movement complete", guide.data)
@@ -262,7 +266,7 @@ class VinlandAppTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 404)
 
-    def test_every_focus_has_valid_home_and_gym_routines(self) -> None:
+    def test_every_focus_has_valid_equipment_free_routines(self) -> None:
         from exercise_library import FOCUSES, build_routine
 
         demo_root = Path(__file__).resolve().parents[1] / "static" / "exercise-demos"
@@ -272,8 +276,28 @@ class VinlandAppTests(unittest.TestCase):
                     with self.subTest(focus=focus, level=level, equipment=equipment):
                         routine = build_routine(focus, level, equipment)
                         self.assertIsNotNone(routine)
+                        self.assertEqual(routine["equipment"], "bodyweight")
                         self.assertEqual(len(routine["exercises"]), 5)
+                        self.assertEqual(
+                            len({item["name"] for item in routine["exercises"]}), 5
+                        )
                         self.assertTrue(all(item["animation"] for item in routine["exercises"]))
+                        self.assertTrue(all(item["duration_seconds"] in (30, 40) for item in routine["exercises"]))
+                        total_seconds = (
+                            len(routine["exercises"])
+                            * routine["sets"]
+                            * routine["exercises"][0]["duration_seconds"]
+                            + (len(routine["exercises"]) * routine["sets"] - 1)
+                            * routine["rest"]
+                        )
+                        self.assertEqual(routine["duration"], (total_seconds + 59) // 60)
+                        self.assertTrue(
+                            all(
+                                item["bodyweight"] == "No equipment"
+                                or "opposite hand" in item["bodyweight"]
+                                for item in routine["exercises"]
+                            )
+                        )
                         for item in routine["exercises"]:
                             if item["demo_id"].startswith("wger_"):
                                 demo_files = [demo_root / f"{item['demo_id']}.png"]
@@ -287,8 +311,7 @@ class VinlandAppTests(unittest.TestCase):
         home_chest = build_routine("chest", "beginner", "bodyweight")
         gym_chest = build_routine("chest", "beginner", "gym")
         self.assertEqual(home_chest["exercises"][2]["name"], "Push-up")
-        self.assertEqual(gym_chest["exercises"][2]["name"], "Dumbbell floor press")
-        self.assertNotEqual(home_chest["exercises"][2]["cue"], gym_chest["exercises"][2]["cue"])
+        self.assertEqual(home_chest, gym_chest)
 
 
 if __name__ == "__main__":

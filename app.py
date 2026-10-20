@@ -232,26 +232,29 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def workout_library() -> str:
         focus = request.args.get("focus", "all")
         level = request.args.get("level", "beginner")
-        equipment = request.args.get("equipment", "bodyweight")
+        equipment = "bodyweight"
         if focus not in {"all", *FOCUSES}:
             focus = "all"
         if level not in {"beginner", "intermediate"}:
             level = "beginner"
-        if equipment not in {"bodyweight", "gym"}:
-            equipment = "bodyweight"
+        routine_durations = {
+            slug: build_routine(slug, level, "bodyweight")["duration"]
+            for slug in FOCUSES
+        }
         return render_template(
             "library.html",
             focuses=FOCUSES,
             selected_focus=focus,
             selected_level=level,
             selected_equipment=equipment,
+            routine_durations=routine_durations,
         )
 
     @app.get("/library/<focus>")
     @login_required
     def workout_guide(focus: str) -> str:
         level = request.args.get("level", "beginner")
-        equipment = request.args.get("equipment", "bodyweight")
+        equipment = "bodyweight"
         routine = build_routine(focus, level, equipment)
         if routine is None:
             abort(404)
@@ -265,6 +268,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         routine = build_routine(focus, level, equipment)
         if routine is None:
             abort(404)
+        equipment = routine["equipment"]
         raw_indexes = request.form.getlist("completed_exercise[]")
         try:
             indexes = sorted({int(value) for value in raw_indexes})

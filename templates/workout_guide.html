@@ -1,30 +1,58 @@
 {% extends "base.html" %}
 {% block title %}{{ routine['title']|title }} workout{% endblock %}
 {% block content %}
-<div class="page-header guide-header">
-  <div><a class="back-link" href="{{ url_for('workout_library', focus=routine['focus'], level=routine['level'], equipment=routine['equipment']) }}">← All workouts</a><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> {{ routine['category']['short'] }} SESSION / {{ routine['level']|upper }}</div><h1>{{ routine['title']|title }} <em>workout.</em></h1><p class="page-subtitle">{{ routine['category']['description'] }}</p></div>
-</div>
-
 <div class="guide-layout">
   <main class="guide-main">
-    <section class="guided-intro panel">
-      <div class="guided-intro-icon focus-{{ routine['category']['color'] }}">{{ routine['category']['icon'] }}</div>
-      <div class="guided-intro-copy"><span class="panel-overline">YOUR PLAN</span><h2>{{ routine['category']['name'] }} · {{ routine['level']|title }}</h2><p>Move through each exercise at your own pace. Study the real movement positions, read the cues, and pause or step through each demo.</p></div>
-      <div class="guided-meta"><span><strong>◷ {{ routine['duration'] }}</strong> min</span><span><strong>▤ {{ routine['exercises']|length }}</strong> movements</span><span><strong>↻ {{ routine['sets'] }}</strong> sets each</span></div>
-    </section>
-
-    <div class="guide-safety"><span>✳</span><p><strong>Before you begin:</strong> Warm up gently for a few minutes. Use a comfortable range of motion and rest longer whenever you need to.</p></div>
-
     <form method="post" action="{{ url_for('complete_guided_workout', focus=routine['focus']) }}" id="guided-workout-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="level" value="{{ routine['level'] }}">
-      <input type="hidden" name="equipment" value="{{ routine['equipment'] }}">
-      <div class="guided-movements">
+      <input type="hidden" name="equipment" value="bodyweight">
+      <section class="guided-player panel" id="guided-player" aria-label="Guided workout player">
+        <div class="player-topline">
+          <div class="player-workout-name"><a href="{{ url_for('workout_library', focus=routine['focus'], level=routine['level']) }}">← All workouts</a><strong>{{ routine['title']|title }} workout</strong><span>{{ routine['category']['short'] }} · {{ routine['level']|title }} · NO EQUIPMENT</span></div>
+          <span class="player-total-time">◷ &nbsp;{{ routine['duration'] }} min</span>
+        </div>
+        <div class="player-progress-row"><span id="player-phase">UP NEXT</span><span id="player-progress">MOVE 01 / 05</span></div>
+        <div class="player-progress" id="player-steps" role="group" aria-label="Workout progress"></div>
+        <div class="player-exercise" id="player-exercise">
+          <div class="player-demo">
+            <img id="player-demo-image" class="is-current" alt="" decoding="async">
+            <img id="player-demo-next" alt="" aria-hidden="true" decoding="async">
+            <span class="player-demo-label"><i></i> MOVEMENT GUIDE</span>
+          </div>
+          <div class="player-instructions">
+            <span class="panel-overline" id="player-equipment">NO EQUIPMENT · {{ routine['level']|upper }}</span>
+            <h2 id="player-exercise-name">{{ routine['exercises'][0]['name'] }}</h2>
+            <p id="player-exercise-cue">{{ routine['exercises'][0]['cue'] }}</p>
+            <div class="player-set-label" id="player-set">SET 1 / {{ routine['exercises'][0]['sets'] }} · {{ routine['exercises'][0]['target'] }}</div>
+            <div class="player-timer-row">
+              <div class="player-countdown" id="player-clock" role="timer" aria-label="Exercise countdown">
+                <svg viewBox="0 0 180 180" aria-hidden="true"><circle class="timer-track" cx="90" cy="90" r="78"></circle><circle class="timer-ring" id="player-timer-ring" cx="90" cy="90" r="78"></circle></svg>
+                <span><strong id="player-clock-text">00:{{ "%02d"|format(routine['exercises'][0]['duration_seconds']) }}</strong><small id="player-clock-caption">READY</small></span>
+              </div>
+              <p class="player-status" id="player-status" aria-live="polite">Press start when you’re ready. Your coach will talk you through it.</p>
+            </div>
+            <div class="player-controls">
+              <button class="button button-primary" id="workout-start" type="button">Start guided workout <span>▶</span></button>
+              <button class="button button-soft" id="workout-pause" type="button" hidden>Pause</button>
+              <button class="button button-quiet" id="workout-skip" type="button" hidden>Skip <span>→</span></button>
+              <button class="voice-toggle" id="voice-toggle" type="button" aria-pressed="true"><span aria-hidden="true">◖</span> Voice on</button>
+              <button class="player-end" id="workout-end" type="button" hidden>End session</button>
+              <button class="button button-primary" id="workout-save" type="submit" hidden>Save workout <span>→</span></button>
+            </div>
+          </div>
+        </div>
+        <div class="player-footer"><span id="player-up-next">UP NEXT · {{ routine['exercises'][1]['name'] }}</span><span>{{ routine['exercises']|length }} MOVEMENTS <i>·</i> {{ routine['sets'] }} SETS EACH</span></div>
+      </section>
+      <details class="plan-details">
+        <summary>View full workout plan <span>{{ routine['exercises']|length }} movements · {{ routine['duration'] }} min</span></summary>
+        <p class="plan-safety">Follow the timer or move at your own pace. Stop and rest if anything feels painful.</p>
+        <div class="guided-movements">
         {% for exercise in routine['exercises'] %}
-        <article class="movement-card panel">
+        <article class="movement-card panel" data-exercise-name="{{ exercise['name'] }}" data-exercise-cue="{{ exercise['cue'] }}" data-duration="{{ exercise['duration_seconds'] }}" data-rest="{{ exercise['rest'] }}" data-sets="{{ exercise['sets'] }}" data-demo-start="{% if exercise['demo_id'].startswith('wger_') %}{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '.png') }}{% else %}{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/0.jpg') }}{% endif %}" data-demo-end="{% if not exercise['demo_id'].startswith('wger_') %}{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/1.jpg') }}{% endif %}">
           <div class="movement-number">{{ "%02d"|format(loop.index) }}</div>
           <div class="movement-content">
-            <div class="movement-title-row"><div><h3>{{ exercise['name'] }}</h3><span class="movement-equipment">{{ exercise['bodyweight'] if routine['equipment'] == 'bodyweight' or routine['focus'] == 'abs' else exercise['gym'] }}</span></div><span class="movement-target">{{ exercise['sets'] }} × {{ exercise['target'] }}</span></div>
+            <div class="movement-title-row"><div><h3>{{ exercise['name'] }}</h3><span class="movement-equipment">No equipment</span></div><span class="movement-target">{{ exercise['sets'] }} × {{ exercise['target'] }}</span></div>
             <p class="movement-cue"><strong>Form cue</strong> {{ exercise['cue'] }}</p>
             {% include "exercise_visual.html" %}
             <div class="movement-actions">
@@ -34,20 +62,15 @@
           </div>
         </article>
         {% endfor %}
-      </div>
-      <div class="guided-finish">
-        <div><strong id="completion-count">0 of {{ routine['exercises']|length }} movements complete</strong><span>Your completed movements are saved to your training log.</span></div>
-        <button class="button button-primary" type="submit">Finish &amp; save session <span>→</span></button>
-      </div>
+        </div>
+        <div class="guided-finish">
+          <div><strong id="completion-count">0 of {{ routine['exercises']|length }} movements complete</strong><span>Manual check-off is available if you train without the timer.</span></div>
+          <button class="button button-primary" type="submit">Save completed movements <span>→</span></button>
+        </div>
+      </details>
+      <a class="guide-log-link player-attribution" href="{{ url_for('static', filename='exercise-demos/ATTRIBUTIONS.md') }}" target="_blank" rel="noopener">Demo artwork credits &amp; licenses <span>↗</span></a>
     </form>
   </main>
-  <aside class="guide-aside">
-    <section class="panel guide-tip guide-animation-tip"><span class="guide-tip-icon">↻</span><span class="panel-overline">YOUR BUILT-IN COACH</span><h3>Real movement demos, right here.</h3><p>See the start and finish of each exercise with locally stored human demonstrations. Let them cycle, pause, or tap through the positions. No video site or extra app.</p></section>
-    <section class="panel guide-tip"><span class="guide-tip-icon">✳</span><span class="panel-overline">A FRIENDLY REMINDER</span><h3>Rest is part of the workout.</h3><p>Take the time you need between sets. A steady, comfortable pace beats rushing through a movement.</p></section>
-    <section class="panel guide-tip guide-tip-safety"><span class="guide-tip-icon">◎</span><span class="panel-overline">LISTEN TO YOUR BODY</span><h3>This is a movement guide.</h3><p>Demonstrations are visual references, not AI or camera-based form analysis. Adjust or skip any exercise and stop if you feel pain.</p></section>
-    <a class="guide-log-link" href="{{ url_for('static', filename='exercise-demos/ATTRIBUTIONS.md') }}" target="_blank" rel="noopener">Demo artwork credits &amp; licenses <span>↗</span></a>
-    <a class="guide-log-link" href="{{ url_for('new_workout') }}">Prefer to log your own session? <span>→</span></a>
-  </aside>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/guided-workout.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/guided-workout.js', v=4) }}" defer></script>{% endblock %}

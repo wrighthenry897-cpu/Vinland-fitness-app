@@ -5,7 +5,7 @@
   <div class="library-hero-copy">
     <span class="eyebrow library-eyebrow"><span class="eyebrow-dot"></span> YOUR NEXT SESSION STARTS HERE</span>
     <h1>Pick a focus.<br><em>We’ll guide the rest.</em></h1>
-    <p>Choose what you want to work on, then follow clear movement cues and in-app exercise demos at your own pace.</p>
+    <p>Choose what you want to work on, then follow a timed, equipment-free session with clear voice cues and in-app movement demos.</p>
     <a class="button button-primary" href="#workout-finder">Explore workouts <span>↓</span></a>
   </div>
   <div class="library-hero-art" aria-hidden="true">
@@ -24,7 +24,7 @@
   <form class="library-filters" action="{{ url_for('workout_library') }}" method="get">
     <label><span>FOCUS AREA</span><select name="focus"><option value="all" {% if selected_focus == 'all' %}selected{% endif %}>All areas</option>{% for slug, focus in focuses.items() %}<option value="{{ slug }}" {% if selected_focus == slug %}selected{% endif %}>{{ focus.name }}</option>{% endfor %}</select></label>
     <label><span>YOUR LEVEL</span><select name="level"><option value="beginner" {% if selected_level == 'beginner' %}selected{% endif %}>Beginner</option><option value="intermediate" {% if selected_level == 'intermediate' %}selected{% endif %}>Intermediate</option></select></label>
-    <label><span>EQUIPMENT</span><select name="equipment"><option value="bodyweight" {% if selected_equipment == 'bodyweight' %}selected{% endif %}>Home · no equipment</option><option value="gym" {% if selected_equipment == 'gym' %}selected{% endif %}>Gym equipment</option></select></label>
+    <input type="hidden" name="equipment" value="bodyweight">
     <button class="button button-soft" type="submit">Show workouts <span>→</span></button>
   </form>
   <div class="focus-grid">
@@ -32,8 +32,8 @@
     <article class="focus-card focus-{{ focus.color }}">
       <div class="focus-card-top"><span class="focus-icon">{{ focus.icon }}</span><span class="focus-kicker">{{ focus.short }} / VINLAND</span></div>
       <h3>{{ focus.name }}</h3><p>{{ focus.description }}</p>
-      <div class="focus-card-meta"><span>◷ &nbsp;{{ focus.duration + (5 if selected_level == 'intermediate' else 0) }} min</span><span>▤ &nbsp;5 movements</span><span>{{ selected_level|title }}</span></div>
-      <a class="focus-card-link" href="{{ url_for('workout_guide', focus=slug, level=selected_level, equipment=selected_equipment) }}">See this workout <span>↗</span></a>
+      <div class="focus-card-meta"><span>◷ &nbsp;{{ routine_durations[slug] }} min</span><span>▤ &nbsp;5 movements</span><span>{{ selected_level|title }}</span></div>
+      <a class="focus-card-link" href="{{ url_for('workout_guide', focus=slug, level=selected_level, equipment='bodyweight') }}">See this workout <span>↗</span></a>
     </article>
     {% endfor %}
   </div>

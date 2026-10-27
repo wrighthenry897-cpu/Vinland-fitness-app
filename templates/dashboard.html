@@ -5,6 +5,19 @@
   <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> {{ today|datetimeformat('%A, %B %d')|upper }}</div><h1>Keep showing up, <em>{{ g.user['name'].split(' ')[0] }}.</em></h1><p class="page-subtitle">Every session is a step in the right direction.</p></div>
   <a class="button button-primary" href="{{ url_for('workout_library') }}"><span class="plus">＋</span> Find a workout</a>
 </div>
+<section class="dashboard-movement-banner" aria-label="Movement inspiration">
+  <div class="dashboard-banner-copy">
+    <span class="banner-kicker">STRENGTH, BUILT ONE REP AT A TIME</span>
+    <h2>Your next strong move<br>starts right here.</h2>
+    <p>Explore guided movement demos, find your focus, and build at a pace that feels good.</p>
+    <a class="banner-link" href="{{ url_for('workout_library') }}">Explore the workout library <span>→</span></a>
+  </div>
+  <div class="dashboard-banner-art" aria-label="Exercise form illustrations">
+    <figure class="banner-movement banner-movement-one"><img src="{{ url_for('static', filename='exercise-demos/Pushups/0.jpg') }}" alt="Athlete demonstrating a push-up start position" loading="eager" decoding="async"><figcaption>UPPER BODY</figcaption></figure>
+    <figure class="banner-movement banner-movement-two"><img src="{{ url_for('static', filename='exercise-demos/Chair_Squat/0.jpg') }}" alt="Athlete demonstrating a squat start position" loading="eager" decoding="async"><figcaption>LOWER BODY</figcaption></figure>
+    <span class="banner-art-spark" aria-hidden="true">✳</span>
+  </div>
+</section>
 <section class="stat-grid" aria-label="Your weekly stats">
   <article class="stat-card"><div class="stat-top"><span class="stat-label">SESSIONS THIS WEEK</span><span class="stat-icon mint-icon">▤</span></div><div class="stat-value">{{ stats['sessions'] }}<small> / 7 days</small></div><div class="stat-foot"><span class="stat-foot-dot"></span> {{ total_workouts }} total sessions logged</div></article>
   <article class="stat-card"><div class="stat-top"><span class="stat-label">TRAINING VOLUME</span><span class="stat-icon peach-icon">↗</span></div><div class="stat-value">{{ "{:,.0f}".format(stats['volume']) }}<small> kg moved</small></div><div class="stat-foot">Across all your lifts this week</div></article>

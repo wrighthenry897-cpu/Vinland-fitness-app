@@ -159,7 +159,7 @@ DEMO_IMAGE_ALIASES = (
     ("plank", "Plank"),
     ("glute bridge", "Butt_Lift_Bridge"),
     ("prone cobra", "Lying_Rear_Delt_Raise"),
-    ("bird dog", "wger_bird_dog"),
+    ("bird dog", "Bird_Dog"),
     ("reverse crunch", "Reverse_Crunch"),
     ("pike push-up", "wger_pike_pushups"),
     ("pike shoulder tap", "wger_pike_pushups"),
@@ -226,7 +226,10 @@ def animation_pattern(name: str, focus: str, index: int) -> str:
 
 
 def build_routine(
-    focus: str, level: str = "beginner", equipment: str = "bodyweight"
+    focus: str,
+    level: str = "beginner",
+    equipment: str = "bodyweight",
+    completed_sessions: int = 0,
 ) -> dict[str, object] | None:
     if focus not in FOCUSES or level not in {"beginner", "intermediate"}:
         return None
@@ -235,8 +238,14 @@ def build_routine(
     equipment = "bodyweight"
     category = FOCUSES[focus]
     is_beginner = level == "beginner"
-    set_count = 2 if is_beginner else 3
+    completed_sessions = max(0, completed_sessions)
+    base_sets = 2 if is_beginner else 3
+    maximum_sets = 4 if is_beginner else 5
+    set_count = min(maximum_sets, base_sets + completed_sessions // 3)
     rest = 45 if is_beginner else 30
+    duration_seconds = (30 if is_beginner else 40) + min(
+        completed_sessions, 4
+    ) * 5
     selected = []
     for index, item in enumerate(MOVEMENTS[focus]):
         name = item["name"]
@@ -248,7 +257,7 @@ def build_routine(
                 "sets": set_count,
                 "target": item["target"],
                 "rest": rest,
-                "duration_seconds": 30 if is_beginner else 40,
+                "duration_seconds": duration_seconds,
                 "animation": animation_pattern(name, focus, index),
                 "demo_id": demo_image_id(name),
             }
@@ -266,10 +275,12 @@ def build_routine(
         "focus": focus,
         "category": category,
         "level": level,
+        "progression_sessions": completed_sessions,
         "equipment": equipment,
         "title": title,
         "duration": (total_seconds + 59) // 60,
         "sets": set_count,
+        "work_seconds": duration_seconds,
         "rest": rest,
         "exercises": selected,
     }

@@ -42,6 +42,7 @@
   const rows = document.getElementById("exercise-rows");
   const template = document.getElementById("exercise-template");
   const addExercise = document.getElementById("add-exercise");
+  const exerciseListStatus = document.getElementById("exercise-list-status");
   if (rows && template && addExercise) {
     addExercise.addEventListener("click", () => {
       const fragment = template.content.cloneNode(true);
@@ -53,10 +54,18 @@
       });
       rows.append(fragment);
       rows.lastElementChild.querySelector("input").focus();
+      exerciseListStatus.textContent = `Exercise ${rows.children.length} added.`;
     });
     rows.addEventListener("click", (event) => {
       const remove = event.target.closest(".remove-exercise");
-      if (remove) remove.closest(".exercise-entry").remove();
+      if (!remove) return;
+      const row = remove.closest(".exercise-entry");
+      const rowNumber = [...rows.children].indexOf(row) + 1;
+      const nextRow = row.nextElementSibling || row.previousElementSibling;
+      row.remove();
+      exerciseListStatus.textContent = `Exercise ${rowNumber} removed. ${rows.children.length} ${rows.children.length === 1 ? "exercise" : "exercises"} remain.`;
+      const nextRemoveButton = nextRow && nextRow.querySelector(".remove-exercise");
+      (nextRemoveButton || addExercise).focus();
     });
   }
 })();

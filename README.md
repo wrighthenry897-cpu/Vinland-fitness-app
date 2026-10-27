@@ -8,10 +8,13 @@ Vinland is a responsive workout coach and fitness-training journal built with Fl
 - CSRF protection on every form submission.
 - Create, edit, and delete workouts with multiple exercises, duration, dates, and notes.
 - Guided, equipment-free beginner and intermediate routines for abs/core, chest, back, arms, legs/glutes, and full body.
-- A timed workout player with repeating set countdowns, rest timers, spoken form cues, pause/skip controls, and automatic progression through the full session.
+- A preview-first workout guide that shows every movement and form demo before the guided player.
+- A timed workout player where users hear an exercise introduction and form cue before choosing to start the timer, with repeating set countdowns, rest timers, pause/skip controls, and automatic progression through the full session.
+- Gradual, per-focus progression: work intervals increase by five seconds with each completed guided session, up to a 20-second increase; sets increase every three sessions and are capped.
 - Bundled two-position human exercise demos with smooth cross-fades, plus manual step-through controls.
 - Mark completed movements and save the guided session directly to your training log; the saved time is adjusted to the movements completed.
 - Personal dashboard with weekly sessions, lifting volume, workout streak, and recent sessions.
+- A dashboard movement banner with bundled upper- and lower-body exercise illustrations.
 - 30-day training progress chart and private profile/weight goals.
 - Responsive layout, accessible form labels, and local SQLite storage.
 
@@ -39,7 +42,7 @@ If port 5000 is already in use, run `$env:PORT = '5057'; python app.py` in Power
 
 The app refuses to start with `ENVIRONMENT=production` unless `SECRET_KEY` is configured. Keep `DATABASE_PATH` on persistent storage in production; ephemeral filesystems can lose SQLite data on redeploy.
 
-The workout catalog and exercise demonstrations are bundled with the app. Most movements use locally stored, two-position exercise photos from the public-domain [Free Exercise DB](https://github.com/yuhonas/free-exercise-db); Bird Dog and Pike Push Ups use licensed illustrations from wger. See [`static/exercise-demos/ATTRIBUTIONS.md`](static/exercise-demos/ATTRIBUTIONS.md) for creators, sources, and license details. Guided demonstrations work without an external video service, video-site account, or AI API. They are visual movement references, not camera-based coaching or personalized medical advice.
+The workout catalog and exercise demonstrations are bundled with the app. Most movements use locally stored, two-position exercise photos from the public-domain [Free Exercise DB](https://github.com/yuhonas/free-exercise-db); their five-step previews blend between the two source poses. Bird Dog uses a CC BY 2.0 photo by PTPioneer, mirrored to show the opposite-side reach, and Pike Push Ups uses a licensed illustration from wger. See [`static/exercise-demos/ATTRIBUTIONS.md`](static/exercise-demos/ATTRIBUTIONS.md) for creators, sources, and license details. Guided demonstrations work without an external video service, video-site account, or AI API. They are visual movement references, not camera-based coaching or personalized medical advice.
 
 ## Run tests
 

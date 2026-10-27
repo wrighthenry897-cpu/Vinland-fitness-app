@@ -15,18 +15,20 @@
       src="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/0.jpg') }}"
       data-next-frame="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/1.jpg') }}"
       data-exercise-name="{{ exercise['name'] }}"
+      data-first-position="{% if exercise['demo_id'] == 'Bird_Dog' %}first-side reach{% else %}starting{% endif %}"
+      data-second-position="{% if exercise['demo_id'] == 'Bird_Dog' %}opposite-side reach{% else %}finishing{% endif %}"
       data-current-frame="0"
-      alt="{{ exercise['name'] }} starting position"
+      alt="{{ exercise['name'] }} {% if exercise['demo_id'] == 'Bird_Dog' %}first-side reach{% else %}starting position{% endif %}"
       loading="lazy"
       decoding="async"
     >
     <span class="demo-live"><i></i> MOVEMENT SEQUENCE</span>
-    <output class="demo-frame-count" aria-live="polite">01 <span>/ 02</span></output>
+    <output class="demo-frame-count" aria-live="polite">01 <span>/ 05</span></output>
     <div class="demo-controls">
-      <button class="demo-step" type="button" aria-label="Show next movement position">↔</button>
+      <button class="demo-step" type="button" aria-label="Advance movement demo one frame">↔</button>
       <button class="demo-toggle" type="button" aria-pressed="false" aria-label="Pause movement demo">Ⅱ</button>
     </div>
     {% endif %}
   </div>
-  <p class="demo-caption"><span>↻</span>{% if exercise['demo_id'].startswith('wger_') %}Study the illustrated position alongside the form cue.{% else %}Starting and finishing positions · pause or step through the demo.{% endif %}</p>
+  <p class="demo-caption"><span>↻</span>{% if exercise['demo_id'].startswith('wger_') %}Study the illustrated position alongside the form cue.{% elif exercise['demo_id'] == 'Bird_Dog' %}Alternate opposite-side reaches · pause or step through the demo.{% else %}Starting and finishing positions · pause or step through the demo.{% endif %}</p>
 </div>

@@ -1,4 +1,19 @@
 (() => {
+  const FRAME_COUNT = 5;
+  const FRAME_INTERVAL = 700;
+
+  const nextFrame = (index, direction) => {
+    let nextIndex = index + direction;
+    if (nextIndex >= FRAME_COUNT) {
+      nextIndex = FRAME_COUNT - 2;
+      direction = -1;
+    } else if (nextIndex < 0) {
+      nextIndex = 1;
+      direction = 1;
+    }
+    return { index: nextIndex, direction };
+  };
+
   const form = document.getElementById("guided-workout-form");
   if (!form) return;
 
@@ -22,6 +37,7 @@
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const transitionPhoto = photo.cloneNode(false);
     transitionPhoto.classList.add("exercise-demo-transition");
+    transitionPhoto.src = frames[1];
     transitionPhoto.alt = "";
     transitionPhoto.setAttribute("aria-hidden", "true");
     canvas.append(transitionPhoto);
@@ -30,23 +46,26 @@
       image.src = source;
     });
     let currentFrame = 0;
+    let frameDirection = 1;
     let timer = null;
 
     const showFrame = (index) => {
       currentFrame = index;
-      frameCount.firstChild.textContent = `0${index + 1} `;
-      photo.alt = `${photo.dataset.exerciseName} ${index === 0 ? "starting" : "finishing"} position`;
-      transitionPhoto.src = frames[index];
-      transitionPhoto.classList.remove("is-visible");
-      if (reducedMotion) {
-        photo.src = frames[index];
-        return;
+      frameCount.firstChild.textContent = `${String(index + 1).padStart(2, "0")} `;
+      if (index === 0) {
+        photo.alt = `${photo.dataset.exerciseName} ${photo.dataset.firstPosition} position`;
+      } else if (index === FRAME_COUNT - 1) {
+        photo.alt = `${photo.dataset.exerciseName} ${photo.dataset.secondPosition} position`;
+      } else {
+        photo.alt = `${photo.dataset.exerciseName} transitioning from ${photo.dataset.firstPosition} to ${photo.dataset.secondPosition}`;
       }
-      requestAnimationFrame(() => transitionPhoto.classList.add("is-visible"));
-      transitionPhoto.addEventListener("transitionend", () => {
-        photo.src = frames[index];
-        transitionPhoto.classList.remove("is-visible");
-      }, { once: true });
+      transitionPhoto.style.opacity = String(index / (FRAME_COUNT - 1));
+    };
+
+    const advanceFrame = () => {
+      const next = nextFrame(currentFrame, frameDirection);
+      frameDirection = next.direction;
+      showFrame(next.index);
     };
 
     const pause = () => {
@@ -62,10 +81,10 @@
       toggle.setAttribute("aria-pressed", "false");
       toggle.setAttribute("aria-label", "Pause movement demo");
       toggle.textContent = "Ⅱ";
-      timer = window.setInterval(() => showFrame(currentFrame === 0 ? 1 : 0), 2200);
+      timer = window.setInterval(advanceFrame, FRAME_INTERVAL);
     };
 
-    step.addEventListener("click", () => showFrame(currentFrame === 0 ? 1 : 0));
+    step.addEventListener("click", advanceFrame);
     toggle.addEventListener("click", () => {
       if (timer === null) play();
       else pause();
@@ -109,8 +128,10 @@
     let voiceEnabled = supportsVoice;
     let paused = false;
     let frameTimer = null;
-    let showingNextFrame = false;
+    let blendFrame = 0;
+    let blendDirection = 1;
     let restMovesForward = false;
+    let introSequence = 0;
 
     const speak = (message) => {
       if (!voiceEnabled) return;
@@ -119,6 +140,50 @@
       instruction.rate = 0.9;
       instruction.pitch = 1;
       window.speechSynthesis.speak(instruction);
+    };
+
+    const exerciseIntroduction = (card) => {
+      const name = card.dataset.exerciseName.toLowerCase();
+      if (name.includes("plank") || name.includes("dead bug") || name.includes("bird dog") || name.includes("crunch")) {
+        return "This one is all about core control. Moving slowly helps you stay steady and keep your breathing comfortable.";
+      }
+      if (name.includes("squat") || name.includes("lunge") || name.includes("calf raise") || name.includes("hinge") || name.includes("good morning")) {
+        return "This is a lower-body strength move. Take your time finding a stable stance, and make each repetition smooth.";
+      }
+      if (name.includes("row") || name.includes("pulldown") || name.includes("pull-down") || name.includes("snow angel") || name.includes("cobra") || name.includes("superman")) {
+        return "This movement works your back and posture muscles. Keep the motion controlled and let your shoulders stay relaxed.";
+      }
+      if (name.includes("curl") || name.includes("triceps") || name.includes("shoulder") || name.includes("push-up") || name.includes("pushup") || name.includes("press")) {
+        return "This upper-body movement builds strength through a steady, controlled range. No need to rush; a comfortable pace is a strong start.";
+      }
+      return "This movement is a chance to build strength and control. Settle into a comfortable position and take it one step at a time.";
+    };
+
+    const speakExercise = (card, onComplete = () => {}) => {
+      const sequence = ++introSequence;
+      if (!voiceEnabled) {
+        onComplete();
+        return;
+      }
+      window.speechSynthesis.cancel();
+      const intro = new SpeechSynthesisUtterance(
+        `Before we begin, here's a little about ${card.dataset.exerciseName}. ${exerciseIntroduction(card)}`
+      );
+      const cue = new SpeechSynthesisUtterance(card.dataset.exerciseCue);
+      intro.rate = 0.9;
+      cue.rate = 0.9;
+      intro.pitch = 1;
+      cue.pitch = 1;
+      let completed = false;
+      const finishIntroduction = () => {
+        if (completed || sequence !== introSequence) return;
+        completed = true;
+        onComplete();
+      };
+      cue.onend = finishIntroduction;
+      cue.onerror = finishIntroduction;
+      window.speechSynthesis.speak(intro);
+      window.speechSynthesis.speak(cue);
     };
 
     const formatTime = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
@@ -158,16 +223,19 @@
       demoImage.classList.add("is-current");
       demoImage.src = startFrame;
       demoImage.alt = `${card.dataset.exerciseName} demonstration`;
-      nextDemoImage.classList.remove("is-current");
+      nextDemoImage.classList.add("is-current");
       nextDemoImage.src = endFrame;
-      showingNextFrame = false;
+      blendFrame = 0;
+      blendDirection = 1;
+      nextDemoImage.style.opacity = "0";
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (startFrame === endFrame || reducedMotion) return;
       frameTimer = window.setInterval(() => {
-        showingNextFrame = !showingNextFrame;
-        demoImage.classList.toggle("is-current", !showingNextFrame);
-        nextDemoImage.classList.toggle("is-current", showingNextFrame);
-      }, 2200);
+        const next = nextFrame(blendFrame, blendDirection);
+        blendFrame = next.index;
+        blendDirection = next.direction;
+        nextDemoImage.style.opacity = String(blendFrame / (FRAME_COUNT - 1));
+      }, FRAME_INTERVAL);
     };
 
     const loadExercise = (index, set = 0, announce = true) => {
@@ -191,7 +259,10 @@
         ? `UP NEXT · ${cards[exerciseIndex + 1].dataset.exerciseName}`
         : "LAST MOVEMENT · FINISH STRONG";
       updateClock();
-      if (announce) speak(`${name}. ${card.dataset.exerciseCue}`);
+      if (announce) {
+        if (setIndex === 0) speakExercise(card);
+        else speak(card.dataset.exerciseCue);
+      }
     };
 
     const finishWorkout = () => {
@@ -280,22 +351,40 @@
     };
 
     loadExercise(0, 0, false);
+    phase = "ready";
     pauseButton.hidden = true;
     skipButton.hidden = true;
     clockText.textContent = formatTime(Number(currentCard().dataset.duration));
     phaseLabel.textContent = "READY WHEN YOU ARE";
-    status.textContent = "Press start when you’re ready. Your coach will talk you through it.";
+    status.textContent = "First, hear a quick introduction to the movement. Your exercise timer will wait until you choose to begin.";
 
     startButton.addEventListener("click", () => {
+      if (phase === "ready") {
+        const intro = exerciseIntroduction(currentCard());
+        phase = "intro";
+        startButton.disabled = true;
+        startButton.textContent = "Introducing your exercise…";
+        status.textContent = `${intro} Your timer will stay paused until you choose to begin.`;
+        player.scrollIntoView({ behavior: "smooth", block: "center" });
+        speakExercise(currentCard(), () => {
+          if (phase !== "intro") return;
+          phase = "intro-ready";
+          startButton.disabled = false;
+          startButton.innerHTML = "Start exercise <span>▶</span>";
+          status.textContent = "That’s the introduction and form cue. Start the exercise whenever you feel ready.";
+        });
+        return;
+      }
+      if (phase !== "intro-ready") return;
       phase = "work";
       remaining = Number(currentCard().dataset.duration);
       startButton.hidden = true;
+      pauseButton.hidden = false;
+      skipButton.hidden = false;
       endButton.hidden = false;
       status.textContent = "Move at a comfortable pace. Modify the movement if you need to.";
       updateClock();
-      speak(`${exerciseName.textContent}. ${exerciseCue.textContent}`);
       startTimer();
-      player.scrollIntoView({ behavior: "smooth", block: "center" });
     });
 
     pauseButton.addEventListener("click", () => {
@@ -333,6 +422,7 @@
       skipButton.hidden = true;
       saveButton.hidden = true;
       phase = "ready";
+      introSequence += 1;
       paused = false;
       restMovesForward = false;
       exerciseIndex = 0;
@@ -340,11 +430,14 @@
       timerRing.classList.remove("is-done");
       exercisePanel.classList.remove("is-complete");
       loadExercise(0, 0, false);
+      phase = "ready";
       pauseButton.hidden = true;
       skipButton.hidden = true;
       clockText.textContent = formatTime(Number(currentCard().dataset.duration));
       phaseLabel.textContent = "READY WHEN YOU ARE";
-      status.textContent = "Press start when you’re ready. Your coach will talk you through it.";
+      startButton.disabled = false;
+      startButton.innerHTML = "Tell me about this exercise <span>◖</span>";
+      status.textContent = "First, hear a quick introduction to the movement. Your exercise timer will wait until you choose to begin.";
       checks.forEach((check) => {
         check.checked = false;
         check.dispatchEvent(new Event("change", { bubbles: true }));
@@ -356,7 +449,25 @@
       voiceButton.setAttribute("aria-pressed", String(voiceEnabled));
       voiceButton.textContent = voiceEnabled ? "Voice on" : "Voice off";
       if (!voiceEnabled && supportsVoice) window.speechSynthesis.cancel();
-      if (voiceEnabled) speak(`${exerciseName.textContent}. ${exerciseCue.textContent}`);
+      if (phase === "intro") {
+        if (voiceEnabled) {
+          speakExercise(currentCard(), () => {
+            if (phase !== "intro") return;
+            phase = "intro-ready";
+            startButton.disabled = false;
+            startButton.innerHTML = "Start exercise <span>▶</span>";
+            status.textContent = "That’s the introduction and form cue. Start the exercise whenever you feel ready.";
+          });
+        } else {
+          introSequence += 1;
+          phase = "intro-ready";
+          startButton.disabled = false;
+          startButton.innerHTML = "Start exercise <span>▶</span>";
+          status.textContent = `${exerciseIntroduction(currentCard())} Start the exercise whenever you're ready.`;
+        }
+      } else if (voiceEnabled && phase === "work") {
+        speak(currentCard().dataset.exerciseCue);
+      }
     });
     if (!supportsVoice) {
       voiceButton.disabled = true;

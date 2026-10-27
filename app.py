@@ -29,6 +29,30 @@ from exercise_library import FOCUSES, build_routine
 F = TypeVar("F", bound=Callable[..., Any])
 
 
+def guided_session_count(db: sqlite3.Connection, user_id: int, focus: str) -> int:
+    category_name = FOCUSES[focus]["name"].lower()
+    return int(
+        db.execute(
+            """
+            SELECT COUNT(*) FROM workouts
+            WHERE user_id = ?
+              AND (
+                  notes LIKE ?
+                  OR (
+                      notes LIKE 'Guided Vinland session%'
+                      AND LOWER(title) LIKE ?
+                  )
+              )
+            """,
+            (
+                user_id,
+                f"Guided Vinland session · focus={focus} ·%",
+                f"%{category_name}%",
+            ),
+        ).fetchone()[0]
+    )
+
+
 def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     app = Flask(__name__, instance_relative_config=True)
     production = os.environ.get("ENVIRONMENT", "").lower() == "production"
@@ -237,10 +261,16 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             focus = "all"
         if level not in {"beginner", "intermediate"}:
             level = "beginner"
-        routine_durations = {
-            slug: build_routine(slug, level, "bodyweight")["duration"]
-            for slug in FOCUSES
-        }
+        db = get_db()
+        routine_durations = {}
+        for slug in FOCUSES:
+            routine = build_routine(
+                slug,
+                level,
+                "bodyweight",
+                guided_session_count(db, g.user["id"], slug),
+            )
+            routine_durations[slug] = routine["duration"]
         return render_template(
             "library.html",
             focuses=FOCUSES,
@@ -253,9 +283,16 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     @app.get("/library/<focus>")
     @login_required
     def workout_guide(focus: str) -> str:
+        if focus not in FOCUSES:
+            abort(404)
         level = request.args.get("level", "beginner")
         equipment = "bodyweight"
-        routine = build_routine(focus, level, equipment)
+        completed_sessions = guided_session_count(
+            get_db(), g.user["id"], focus
+        )
+        routine = build_routine(
+            focus, level, equipment, completed_sessions
+        )
         if routine is None:
             abort(404)
         return render_template("workout_guide.html", routine=routine)
@@ -265,7 +302,12 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def complete_guided_workout(focus: str) -> Any:
         level = request.form.get("level", "beginner")
         equipment = request.form.get("equipment", "bodyweight")
-        routine = build_routine(focus, level, equipment)
+        completed_sessions = guided_session_count(
+            get_db(), g.user["id"], focus
+        )
+        routine = build_routine(
+            focus, level, equipment, completed_sessions
+        )
         if routine is None:
             abort(404)
         equipment = routine["equipment"]
@@ -289,7 +331,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
                 routine["title"].title(),
                 date.today().isoformat(),
                 duration,
-                f"Guided Vinland session · {level} · {equipment} · "
+                f"Guided Vinland session · focus={focus} · {level} · {equipment} · "
                 f"{len(indexes)} of {len(exercises)} movements completed.",
             ),
         )

@@ -193,9 +193,16 @@ class VinlandAppTests(unittest.TestCase):
         self.assertIn(b"MOVEMENT SEQUENCE", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/0.jpg", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/1.jpg", guide.data)
+        self.assertIn(b"01 <span>/ 05</span>", guide.data)
+        self.assertIn(b"exercise-demos/Bird_Dog/0.jpg", guide.data)
+        self.assertIn(b"exercise-demos/Bird_Dog/1.jpg", guide.data)
+        self.assertIn(b"Alternate opposite-side reaches", guide.data)
+        self.assertIn(b'data-first-position="first-side reach"', guide.data)
+        self.assertIn(b'data-second-position="opposite-side reach"', guide.data)
         self.assertIn(b"Pause movement demo", guide.data)
         self.assertIn(b"Demo artwork credits", guide.data)
-        self.assertIn(b"Start guided workout", guide.data)
+        self.assertIn(b"Tell me about this exercise", guide.data)
+        self.assertIn(b"Your exercise timer will wait until you choose to begin", guide.data)
         self.assertIn(b"Voice on", guide.data)
         self.assertIn(b"data-duration=\"30\"", guide.data)
         self.assertIn(b"NO EQUIPMENT", guide.data)
@@ -206,6 +213,14 @@ class VinlandAppTests(unittest.TestCase):
         self.assertEqual(image.status_code, 200)
         self.assertEqual(image.mimetype, "image/jpeg")
         image.close()
+        bird_dog_image = self.client.get("/static/exercise-demos/Bird_Dog/0.jpg")
+        self.assertEqual(bird_dog_image.status_code, 200)
+        self.assertEqual(bird_dog_image.mimetype, "image/jpeg")
+        bird_dog_image.close()
+        opposite_side_image = self.client.get("/static/exercise-demos/Bird_Dog/1.jpg")
+        self.assertEqual(opposite_side_image.status_code, 200)
+        self.assertEqual(opposite_side_image.mimetype, "image/jpeg")
+        opposite_side_image.close()
 
     def test_guided_workout_requires_a_completed_movement(self) -> None:
         self.register()
@@ -251,6 +266,32 @@ class VinlandAppTests(unittest.TestCase):
             self.assertEqual(len(exercises), 2)
             self.assertEqual([exercise["name"] for exercise in exercises], ["Dead bug", "Glute bridge"])
             self.assertTrue(all(exercise["sets"] == 2 for exercise in exercises))
+
+    def test_guided_workout_progresses_after_each_completed_session(self) -> None:
+        self.register()
+        response = self.client.post(
+            "/library/abs/complete",
+            data={
+                "csrf_token": self.token(),
+                "level": "beginner",
+                "equipment": "bodyweight",
+                "completed_exercise[]": ["0"],
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        guide = self.client.get("/library/abs?level=beginner")
+        self.assertEqual(guide.status_code, 200)
+        self.assertIn(b"SESSION 2", guide.data)
+        self.assertIn(b'data-duration="35"', guide.data)
+
+        from exercise_library import build_routine
+
+        fourth_session = build_routine("abs", "beginner", completed_sessions=3)
+        self.assertEqual(fourth_session["sets"], 3)
+        self.assertEqual(fourth_session["work_seconds"], 45)
+        capped = build_routine("abs", "beginner", completed_sessions=20)
+        self.assertEqual(capped["sets"], 4)
+        self.assertEqual(capped["work_seconds"], 50)
 
     def test_unknown_focus_or_movement_is_not_accepted(self) -> None:
         self.register()

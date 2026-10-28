@@ -72,6 +72,8 @@ class VinlandAppTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Strength day", response.data)
+        self.assertIn(b"WORKOUT COMPLETE!", response.data)
+        self.assertIn(b'class="completion-celebration is-visible"', response.data)
         self.assertIn(b"2,640", self.client.get("/").data)
         self.assertIn(b"Volume over the last 30 days", self.client.get("/progress").data)
 
@@ -273,6 +275,10 @@ class VinlandAppTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Beginner Abs &amp; Core", response.data)
+        self.assertIn(b"WORKOUT COMPLETE!", response.data)
+        self.assertIn(b'id="completion-celebration"', response.data)
+        self.assertIn(b'class="clash-dagger clash-dagger-left"', response.data)
+        self.assertIn(b'class="clash-dagger clash-dagger-right"', response.data)
         with self.app.app_context():
             from app import get_db
 

@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f34b37">
+  <meta name="theme-color" content="#12362d">
   <meta name="description" content="Vinland — build strength, one guided workout at a time.">
   <title>{% block title %}Vinland{% endblock %} · Vinland</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=8) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=13) }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -55,7 +55,29 @@
       </header>
       <div class="page-wrap">
         {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}<div class="flash-stack" role="status">{% for category, message in messages %}<div class="flash flash-{{ category }}"><span>{{ '✓' if category == 'success' else '!' }}</span>{{ message }}<button type="button" class="flash-close" aria-label="Dismiss">×</button></div>{% endfor %}</div>{% endif %}
+          {% if messages %}
+            {% set completion = namespace(saved=false) %}
+            <div class="flash-stack" role="status">
+              {% for category, message in messages %}
+                <div class="flash flash-{{ category }}"><span>{{ '✓' if category == 'success' else '!' }}</span>{{ message }}<button type="button" class="flash-close" aria-label="Dismiss">×</button></div>
+                {% if category == 'success' and (message.startswith('Session complete') or message.startswith('Workout saved')) %}{% set completion.saved = true %}{% endif %}
+              {% endfor %}
+            </div>
+            {% if completion.saved %}
+              <div class="completion-celebration is-visible" id="completion-celebration" role="status" aria-live="polite" aria-atomic="true">
+                <div class="celebration-card">
+                  <span class="celebration-kicker">VINLAND · TRAINING LOG</span>
+                  <div class="blade-clash" aria-hidden="true">
+                    <svg class="clash-dagger clash-dagger-left" viewBox="0 0 100 30" focusable="false"><path class="dagger-blade" d="M24 10 81 12 98 15 81 18 24 20Z"/><path class="dagger-edge" d="m27 12 62 3-62 3Z"/><path class="dagger-guard" d="m22 5 5 1 4 9-4 9-5 1 3-10Z"/><path class="dagger-grip" d="M4 12h20v6H4z"/><path class="dagger-wrap" d="m8 12 4 6m3-6 4 6"/><path class="dagger-pommel" d="M2 10h4v10H2z"/></svg>
+                    <svg class="clash-dagger clash-dagger-right" viewBox="0 0 100 30" focusable="false"><path class="dagger-blade" d="M24 10 81 12 98 15 81 18 24 20Z"/><path class="dagger-edge" d="m27 12 62 3-62 3Z"/><path class="dagger-guard" d="m22 5 5 1 4 9-4 9-5 1 3-10Z"/><path class="dagger-grip" d="M4 12h20v6H4z"/><path class="dagger-wrap" d="m8 12 4 6m3-6 4 6"/><path class="dagger-pommel" d="M2 10h4v10H2z"/></svg>
+                    <span class="clash-spark">✦</span>
+                  </div>
+                  <strong>WORKOUT COMPLETE!</strong>
+                  <span class="celebration-message">You showed up. That’s a win.</span>
+                </div>
+              </div>
+            {% endif %}
+          {% endif %}
         {% endwith %}
         {% block content %}{% endblock %}
       </div>
@@ -83,7 +105,7 @@
     <div class="auth-footer"><span>© {{ today[:4] }} VINLAND</span><span>STRONGER, IN YOUR OWN TIME.</span></div>
   </main>
 {% endif %}
-<script src="{{ url_for('static', filename='js/app.js', v=3) }}" defer></script>
+<script src="{{ url_for('static', filename='js/app.js', v=5) }}" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

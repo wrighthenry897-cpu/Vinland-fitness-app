@@ -1,4 +1,12 @@
 (() => {
+  const celebration = document.getElementById("completion-celebration");
+  if (celebration) {
+    window.setTimeout(() => {
+      celebration.classList.remove("is-visible");
+      window.setTimeout(() => celebration.remove(), 350);
+    }, 3300);
+  }
+
   const menuToggle = document.getElementById("menu-toggle");
   const sidebar = document.getElementById("sidebar");
   if (menuToggle && sidebar) {

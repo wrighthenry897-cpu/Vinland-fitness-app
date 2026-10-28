@@ -169,6 +169,25 @@ class VinlandAppTests(unittest.TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Your profile has been updated.", response.data)
+        dashboard = self.client.get("/")
+        self.assertIn(b"0.0", dashboard.data)
+        self.assertIn(b"0.0 kg", dashboard.data)
+        profile = self.client.get("/profile")
+        self.assertIn(b'min="0"', profile.data)
+        self.assertIn(b'value="0.0"', profile.data)
+
+    def test_dashboard_and_progress_charts_include_accessible_daily_data(self) -> None:
+        self.register()
+        dashboard = self.client.get("/")
+        self.assertIn(b'aria-controls="sidebar"', dashboard.data)
+        self.assertIn(b'role="img" aria-label="Bar chart', dashboard.data)
+        self.assertIn(b"View daily data", dashboard.data)
+        self.assertIn(b"<th scope=\"col\">Volume</th>", dashboard.data)
+
+        progress = self.client.get("/progress")
+        self.assertIn(b'role="img" aria-label="Line chart', progress.data)
+        self.assertIn(b"View daily data", progress.data)
+        self.assertIn(b"<th scope=\"col\">Sessions</th>", progress.data)
 
     def test_invalid_exercise_is_preserved_for_correction(self) -> None:
         self.register()

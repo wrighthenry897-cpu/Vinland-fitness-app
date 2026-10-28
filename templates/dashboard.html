@@ -22,14 +22,15 @@
   <article class="stat-card"><div class="stat-top"><span class="stat-label">SESSIONS THIS WEEK</span><span class="stat-icon mint-icon">▤</span></div><div class="stat-value">{{ stats['sessions'] }}<small> / 7 days</small></div><div class="stat-foot"><span class="stat-foot-dot"></span> {{ total_workouts }} total sessions logged</div></article>
   <article class="stat-card"><div class="stat-top"><span class="stat-label">TRAINING VOLUME</span><span class="stat-icon peach-icon">↗</span></div><div class="stat-value">{{ "{:,.0f}".format(stats['volume']) }}<small> kg moved</small></div><div class="stat-foot">Across all your lifts this week</div></article>
   <article class="stat-card"><div class="stat-top"><span class="stat-label">CURRENT STREAK</span><span class="stat-icon violet-icon">✳</span></div><div class="stat-value">{{ streak }}<small> {{ 'day' if streak == 1 else 'days' }}</small></div><div class="stat-foot">{% if streak %}<span class="stat-foot-dot"></span> Momentum looks good{% else %}Your next session starts a new one{% endif %}</div></article>
-  <article class="stat-card weight-stat"><div class="stat-top"><span class="stat-label">YOUR WEIGHT GOAL</span><span class="stat-icon blue-icon">◎</span></div>{% if g.user['current_weight'] and g.user['target_weight'] %}<div class="stat-value">{{ "%.1f"|format(g.user['current_weight']) }}<small> → {{ "%.1f"|format(g.user['target_weight']) }} kg</small></div><div class="stat-foot"><a href="{{ url_for('profile') }}">Update your progress <span>→</span></a></div>{% else %}<div class="stat-value stat-value-empty">Set a goal<small> to track progress</small></div><div class="stat-foot"><a href="{{ url_for('profile') }}">Add your weight goal <span>→</span></a></div>{% endif %}</article>
+  <article class="stat-card weight-stat"><div class="stat-top"><span class="stat-label">YOUR WEIGHT GOAL</span><span class="stat-icon blue-icon">◎</span></div>{% if g.user['current_weight'] is not none and g.user['target_weight'] is not none %}<div class="stat-value">{{ "%.1f"|format(g.user['current_weight']) }}<small> → {{ "%.1f"|format(g.user['target_weight']) }} kg</small></div><div class="stat-foot"><a href="{{ url_for('profile') }}">Update your progress <span>→</span></a></div>{% else %}<div class="stat-value stat-value-empty">Set a goal<small> to track progress</small></div><div class="stat-foot"><a href="{{ url_for('profile') }}">Add your weight goal <span>→</span></a></div>{% endif %}</article>
 </section>
 <div class="dashboard-grid">
   <section class="panel volume-panel">
     <div class="panel-heading"><div><span class="panel-overline">THE BIG PICTURE</span><h2>Your week, in motion</h2></div><span class="period-pill"><span></span> LAST 7 DAYS</span></div>
     <div class="chart-summary"><strong>{{ "{:,.0f}".format(stats['volume']) }} <small>kg</small></strong><span>Total volume</span></div>
-    <div class="chart-wrap chart-wrap-week"><canvas id="volume-chart" aria-label="Bar chart of your training volume over the last seven days"></canvas></div>
+    <div class="chart-wrap chart-wrap-week"><canvas id="volume-chart" role="img" aria-label="Bar chart of your training volume over the last seven days"></canvas></div>
     <div class="chart-labels">{% for day in chart_days %}<span>{{ day.label }}</span>{% endfor %}</div>
+    <details class="chart-data-details"><summary>View daily data</summary><div class="chart-data-scroll"><table><thead><tr><th scope="col">Day</th><th scope="col">Volume</th><th scope="col">Sessions</th></tr></thead><tbody>{% for day in chart_days %}<tr><th scope="row">{{ day.label }}, {{ day.date }}</th><td>{{ "{:,.0f}".format(day.volume) }} kg</td><td>{{ day.sessions }}</td></tr>{% endfor %}</tbody></table></div></details>
     <script id="chart-data" type="application/json">{{ chart_days|tojson }}</script>
   </section>
   <section class="panel weekly-panel">
@@ -49,4 +50,4 @@
 </section>
 <div class="dashboard-footer-note"><span>✳</span> You don’t have to be extreme, just consistent.</div>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/charts.js', v=1) }}" defer></script>{% endblock %}

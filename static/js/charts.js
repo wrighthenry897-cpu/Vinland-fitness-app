@@ -56,8 +56,8 @@
         y: top + height - ((Number(day.volume) || 0) / roundedMax) * height,
       }));
       const gradient = ctx.createLinearGradient(0, top, 0, top + height);
-      gradient.addColorStop(0, "rgba(176, 218, 126, .27)");
-      gradient.addColorStop(1, "rgba(176, 218, 126, 0)");
+      gradient.addColorStop(0, "rgba(243, 90, 61, .22)");
+      gradient.addColorStop(1, "rgba(243, 90, 61, 0)");
       ctx.beginPath();
       points.forEach((point, index) => {
         if (index === 0) ctx.moveTo(point.x, point.y);
@@ -75,7 +75,7 @@
         if (index === 0) ctx.moveTo(point.x, point.y);
         else ctx.lineTo(point.x, point.y);
       });
-      ctx.strokeStyle = "#8dbb61";
+      ctx.strokeStyle = "#e94b35";
       ctx.lineWidth = 2;
       ctx.lineJoin = "round";
       ctx.stroke();
@@ -85,7 +85,7 @@
           ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
           ctx.fillStyle = "#fff";
           ctx.fill();
-          ctx.strokeStyle = "#82af58";
+          ctx.strokeStyle = "#e94b35";
           ctx.lineWidth = 1.5;
           ctx.stroke();
         }
@@ -99,16 +99,17 @@
         const x = left + slot * index + (slot - barWidth) / 2;
         const y = top + height - barHeight;
         const gradient = ctx.createLinearGradient(0, y, 0, top + height);
-        gradient.addColorStop(0, "#b9e486");
-        gradient.addColorStop(1, "#e5f1d6");
+        gradient.addColorStop(0, "#ff8b67");
+        gradient.addColorStop(1, "#ffe2d5");
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 1, 1]);
+        if (typeof ctx.roundRect === "function") ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 1, 1]);
+        else ctx.rect(x, y, barWidth, barHeight);
         ctx.fillStyle = gradient;
         ctx.fill();
         if (day.sessions) {
           ctx.beginPath();
           ctx.arc(x + barWidth / 2, top + height + 3, 2, 0, Math.PI * 2);
-          ctx.fillStyle = "#8db75c";
+          ctx.fillStyle = "#e94b35";
           ctx.fill();
         }
       });

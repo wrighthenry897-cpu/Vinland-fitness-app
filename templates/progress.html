@@ -13,10 +13,11 @@
 <section class="panel progress-chart-panel">
   <div class="panel-heading"><div><span class="panel-overline">YOUR TRAINING RHYTHM</span><h2>Volume over the last 30 days</h2></div><span class="period-pill"><span></span> 30 DAYS</span></div>
   <div class="progress-chart-total"><strong>{{ "{:,.0f}".format(totals['volume']) }} <small>kg</small></strong><span>total training volume</span></div>
-  <div class="chart-wrap chart-wrap-month"><canvas id="progress-chart" aria-label="Line chart of training volume over the last 30 days"></canvas></div>
+  <div class="chart-wrap chart-wrap-month"><canvas id="progress-chart" role="img" aria-label="Line chart of training volume over the last 30 days"></canvas></div>
   <div class="chart-month-labels"><span>{{ days[0].date }}</span><span>{{ days[7].date }}</span><span>{{ days[14].date }}</span><span>{{ days[21].date }}</span><span>{{ days[-1].date }}</span></div>
+  <details class="chart-data-details"><summary>View daily data</summary><div class="chart-data-scroll"><table><thead><tr><th scope="col">Day</th><th scope="col">Volume</th><th scope="col">Sessions</th></tr></thead><tbody>{% for day in days %}<tr><th scope="row">{{ day.date }}</th><td>{{ "{:,.0f}".format(day.volume) }} kg</td><td>{{ day.sessions }}</td></tr>{% endfor %}</tbody></table></div></details>
   <script id="chart-data" type="application/json">{{ days|tojson }}</script>
 </section>
 <section class="progress-note"><span class="progress-note-mark">✳</span><div><strong>Consistency is its own kind of strength.</strong><p>Some days you’ll lift more. Some days you’ll just show up. Both count.</p></div></section>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/charts.js') }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/charts.js', v=1) }}" defer></script>{% endblock %}

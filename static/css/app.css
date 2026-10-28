@@ -821,3 +821,21 @@ button:disabled, .button:disabled {
   .player-controls .button, .voice-toggle, .player-end { min-height: 46px; }
   .demo-toggle, .demo-step { width: 42px; height: 42px; }
 }
+body.nav-open { overflow: hidden; }
+body.nav-open::before {
+  position: fixed;
+  z-index: 7;
+  inset: 0;
+  background: rgba(25, 19, 17, .52);
+  content: "";
+}
+.chart-data-details { margin-top: 12px; color: #806f69; font-size: 11px; }
+.chart-data-details > summary { width: max-content; color: #973b2a; cursor: pointer; font-weight: 600; }
+.chart-data-scroll { max-height: 240px; margin-top: 8px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; }
+.chart-data-scroll table { width: 100%; border-collapse: collapse; background: #fff; text-align: left; }
+.chart-data-scroll th, .chart-data-scroll td { padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.chart-data-scroll thead { position: sticky; top: 0; color: #806f69; background: #fff8f5; }
+.chart-data-scroll tbody tr:last-child th, .chart-data-scroll tbody tr:last-child td { border-bottom: 0; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}

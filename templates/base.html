@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=7) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=8) }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -51,7 +51,7 @@
     <main class="main-content">
       <header class="mobile-header">
         <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/></svg></span><span class="brand-name">vinland<span>.</span></span></a>
-        <button class="mobile-menu-button" id="menu-toggle" aria-label="Open navigation" aria-expanded="false" title="Open navigation">☰</button>
+        <button class="mobile-menu-button" id="menu-toggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false" title="Open navigation">☰</button>
       </header>
       <div class="page-wrap">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -83,7 +83,7 @@
     <div class="auth-footer"><span>© {{ today[:4] }} VINLAND</span><span>STRONGER, IN YOUR OWN TIME.</span></div>
   </main>
 {% endif %}
-<script src="{{ url_for('static', filename='js/app.js', v=2) }}" defer></script>
+<script src="{{ url_for('static', filename='js/app.js', v=3) }}" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

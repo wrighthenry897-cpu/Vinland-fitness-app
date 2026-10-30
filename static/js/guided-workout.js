@@ -1,18 +1,6 @@
 (() => {
-  const FRAME_COUNT = 5;
-  const FRAME_INTERVAL = 700;
-
-  const nextFrame = (index, direction) => {
-    let nextIndex = index + direction;
-    if (nextIndex >= FRAME_COUNT) {
-      nextIndex = FRAME_COUNT - 2;
-      direction = -1;
-    } else if (nextIndex < 0) {
-      nextIndex = 1;
-      direction = 1;
-    }
-    return { index: nextIndex, direction };
-  };
+  const DEMO_FRAME_INTERVAL = 2600;
+  const PLAYER_FRAME_INTERVAL = 2600;
 
   const form = document.getElementById("guided-workout-form");
   if (!form) return;
@@ -33,6 +21,8 @@
     const toggle = canvas.querySelector(".demo-toggle");
     const step = canvas.querySelector(".demo-step");
     const frameCount = canvas.querySelector(".demo-frame-count");
+    const frameNumber = frameCount.querySelector(".demo-frame-number");
+    const frameLabel = frameCount.querySelector(".demo-frame-label");
     const frames = [photo.getAttribute("src"), photo.dataset.nextFrame];
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const transitionPhoto = photo.cloneNode(false);
@@ -41,38 +31,27 @@
     transitionPhoto.alt = "";
     transitionPhoto.setAttribute("aria-hidden", "true");
     canvas.append(transitionPhoto);
-    frames.forEach((source) => {
-      const image = new Image();
-      image.src = source;
-    });
     let currentFrame = 0;
-    let frameDirection = 1;
     let timer = null;
 
     const showFrame = (index) => {
       currentFrame = index;
-      frameCount.firstChild.textContent = `${String(index + 1).padStart(2, "0")} `;
-      if (index === 0) {
-        photo.alt = `${photo.dataset.exerciseName} ${photo.dataset.firstPosition} position`;
-      } else if (index === FRAME_COUNT - 1) {
-        photo.alt = `${photo.dataset.exerciseName} ${photo.dataset.secondPosition} position`;
-      } else {
-        photo.alt = `${photo.dataset.exerciseName} transitioning from ${photo.dataset.firstPosition} to ${photo.dataset.secondPosition}`;
-      }
-      transitionPhoto.style.opacity = String(index / (FRAME_COUNT - 1));
+      photo.dataset.currentFrame = String(index);
+      frameNumber.textContent = `0${index + 1}`;
+      frameLabel.textContent = index === 0 ? photo.dataset.firstLabel : photo.dataset.secondLabel;
+      photo.alt = `${photo.dataset.exerciseName} ${index === 0 ? photo.dataset.firstPosition : photo.dataset.secondPosition} position`;
+      step.setAttribute("aria-label", `Show the ${index === 0 ? "finishing" : "starting"} position`);
+      transitionPhoto.classList.toggle("is-visible", index === 1);
     };
 
-    const advanceFrame = () => {
-      const next = nextFrame(currentFrame, frameDirection);
-      frameDirection = next.direction;
-      showFrame(next.index);
-    };
+    const advanceFrame = () => showFrame(currentFrame === 0 ? 1 : 0);
 
     const pause = () => {
       if (timer !== null) window.clearInterval(timer);
       timer = null;
       toggle.setAttribute("aria-pressed", "true");
       toggle.setAttribute("aria-label", "Play movement demo");
+      toggle.title = "Play movement demo";
       toggle.textContent = "▶";
     };
 
@@ -80,8 +59,9 @@
       if (timer !== null) return;
       toggle.setAttribute("aria-pressed", "false");
       toggle.setAttribute("aria-label", "Pause movement demo");
+      toggle.title = "Pause movement demo";
       toggle.textContent = "Ⅱ";
-      timer = window.setInterval(advanceFrame, FRAME_INTERVAL);
+      timer = window.setInterval(advanceFrame, DEMO_FRAME_INTERVAL);
     };
 
     step.addEventListener("click", advanceFrame);
@@ -89,6 +69,7 @@
       if (timer === null) play();
       else pause();
     });
+    showFrame(0);
     if (reducedMotion) pause();
     else play();
   });
@@ -128,8 +109,7 @@
     let voiceEnabled = supportsVoice;
     let paused = false;
     let frameTimer = null;
-    let blendFrame = 0;
-    let blendDirection = 1;
+    let playerFrame = 0;
     let restMovesForward = false;
     let introSequence = 0;
 
@@ -223,19 +203,16 @@
       demoImage.classList.add("is-current");
       demoImage.src = startFrame;
       demoImage.alt = `${card.dataset.exerciseName} demonstration`;
-      nextDemoImage.classList.add("is-current");
       nextDemoImage.src = endFrame;
-      blendFrame = 0;
-      blendDirection = 1;
-      nextDemoImage.style.opacity = "0";
+      nextDemoImage.classList.remove("is-current");
+      playerFrame = 0;
       const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (startFrame === endFrame || reducedMotion) return;
       frameTimer = window.setInterval(() => {
-        const next = nextFrame(blendFrame, blendDirection);
-        blendFrame = next.index;
-        blendDirection = next.direction;
-        nextDemoImage.style.opacity = String(blendFrame / (FRAME_COUNT - 1));
-      }, FRAME_INTERVAL);
+        playerFrame = playerFrame === 0 ? 1 : 0;
+        demoImage.classList.toggle("is-current", playerFrame === 0);
+        nextDemoImage.classList.toggle("is-current", playerFrame === 1);
+      }, PLAYER_FRAME_INTERVAL);
     };
 
     const loadExercise = (index, set = 0, announce = true) => {

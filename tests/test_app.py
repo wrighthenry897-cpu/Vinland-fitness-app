@@ -97,6 +97,40 @@ class VinlandAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"No workouts yet", response.data)
 
+    def test_workout_log_search_and_date_filters(self) -> None:
+        from datetime import date, timedelta
+
+        self.register()
+        today = date.today()
+        recent = self.workout_data(self.token(), "Upper strength")
+        recent["notes"] = "Felt great"
+        self.client.post("/workouts/new", data=recent)
+        old = self.workout_data(self.token(), "Old training day")
+        old["workout_date"] = (today - timedelta(days=100)).isoformat()
+        old["exercise_name[]"] = ["Dead bug", "Bridge"]
+        old["notes"] = "Core focus"
+        self.client.post("/workouts/new", data=old)
+
+        response = self.client.get("/workouts?q=dead+bug")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Old training day", response.data)
+        self.assertNotIn(b"Upper strength", response.data)
+
+        response = self.client.get("/workouts?q=core")
+        self.assertIn(b"Old training day", response.data)
+        self.assertNotIn(b"Upper strength", response.data)
+
+        response = self.client.get("/workouts?q=%25")
+        self.assertIn(b"No sessions match those filters.", response.data)
+
+        response = self.client.get("/workouts?period=30")
+        self.assertIn(b"Upper strength", response.data)
+        self.assertNotIn(b"Old training day", response.data)
+
+        response = self.client.get("/workouts?q=missing&period=90")
+        self.assertIn(b"No sessions match those filters.", response.data)
+        self.assertIn(b"Clear filters", response.data)
+
     def test_csrf_and_account_isolation(self) -> None:
         self.register()
         response = self.client.post("/workouts/new", data=self.workout_data("invalid"))
@@ -203,18 +237,30 @@ class VinlandAppTests(unittest.TestCase):
     def test_workout_library_shows_bundled_human_movement_demos(self) -> None:
         self.register()
         library = self.client.get(
-            "/library?focus=abs&level=beginner&equipment=bodyweight"
+            "/library?focus=abs&level=beginner"
         )
         self.assertEqual(library.status_code, 200)
         self.assertIn(b"Abs &amp; core", library.data)
+        self.assertIn(b"No equipment", library.data)
         self.assertNotIn(b"<h3>Legs &amp; glutes</h3>", library.data)
 
-        guide = self.client.get("/library/abs?level=beginner&equipment=bodyweight")
+        all_focuses = self.client.get("/library?focus=all&level=beginner")
+        for focus in ("abs", "chest", "back", "arms", "legs", "full-body"):
+            self.assertIn(f'has-photo-art focus-{focus}'.encode(), all_focuses.data)
+            self.assertIn(b'class="focus-photo-art"', all_focuses.data)
+            self.assertIn(f'images/workout-focus/{focus}.jpg'.encode(), all_focuses.data)
+            image = self.client.get(f"/static/images/workout-focus/{focus}.jpg")
+            self.assertEqual(image.status_code, 200)
+            image.close()
+
+        guide = self.client.get("/library/abs?level=beginner")
         self.assertEqual(guide.status_code, 200)
         self.assertIn(b"MOVEMENT SEQUENCE", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/0.jpg", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/1.jpg", guide.data)
-        self.assertIn(b"01 <span>/ 05</span>", guide.data)
+        self.assertIn(b'class="demo-frame-number">01</span>', guide.data)
+        self.assertIn(b'class="demo-frame-label">START</span>', guide.data)
+        self.assertIn(b'data-first-label="SIDE 1"', guide.data)
         self.assertIn(b"exercise-demos/Bird_Dog/0.jpg", guide.data)
         self.assertIn(b"exercise-demos/Bird_Dog/1.jpg", guide.data)
         self.assertIn(b"Alternate opposite-side reaches", guide.data)
@@ -227,6 +273,7 @@ class VinlandAppTests(unittest.TestCase):
         self.assertIn(b"Voice on", guide.data)
         self.assertIn(b"data-duration=\"30\"", guide.data)
         self.assertIn(b"NO EQUIPMENT", guide.data)
+        self.assertNotIn(b"gym", guide.data.lower())
         self.assertNotIn(b"exercise-illustration", guide.data)
         self.assertNotIn(b"youtube", guide.data.lower())
         self.assertIn(b"Mark movement complete", guide.data)
@@ -250,7 +297,6 @@ class VinlandAppTests(unittest.TestCase):
             data={
                 "csrf_token": self.token(),
                 "level": "beginner",
-                "equipment": "bodyweight",
             },
             follow_redirects=True,
         )
@@ -268,7 +314,6 @@ class VinlandAppTests(unittest.TestCase):
             data={
                 "csrf_token": self.token(),
                 "level": "beginner",
-                "equipment": "bodyweight",
                 "completed_exercise[]": ["0", "2"],
             },
             follow_redirects=True,
@@ -299,7 +344,6 @@ class VinlandAppTests(unittest.TestCase):
             data={
                 "csrf_token": self.token(),
                 "level": "beginner",
-                "equipment": "bodyweight",
                 "completed_exercise[]": ["0"],
             },
         )
@@ -326,7 +370,6 @@ class VinlandAppTests(unittest.TestCase):
             data={
                 "csrf_token": self.token(),
                 "level": "expert",
-                "equipment": "bodyweight",
                 "completed_exercise[]": ["0"],
             },
         )
@@ -338,46 +381,47 @@ class VinlandAppTests(unittest.TestCase):
         demo_root = Path(__file__).resolve().parents[1] / "static" / "exercise-demos"
         for focus in FOCUSES:
             for level in ("beginner", "intermediate"):
-                for equipment in ("bodyweight", "gym"):
-                    with self.subTest(focus=focus, level=level, equipment=equipment):
-                        routine = build_routine(focus, level, equipment)
-                        self.assertIsNotNone(routine)
-                        self.assertEqual(routine["equipment"], "bodyweight")
-                        self.assertEqual(len(routine["exercises"]), 5)
-                        self.assertEqual(
-                            len({item["name"] for item in routine["exercises"]}), 5
+                with self.subTest(focus=focus, level=level):
+                    routine = build_routine(focus, level)
+                    self.assertIsNotNone(routine)
+                    self.assertEqual(routine["equipment"], "bodyweight")
+                    self.assertEqual(len(routine["exercises"]), 5)
+                    self.assertEqual(
+                        len({item["name"] for item in routine["exercises"]}), 5
+                    )
+                    self.assertTrue(all(item["animation"] for item in routine["exercises"]))
+                    self.assertTrue(all(item["duration_seconds"] in (30, 40) for item in routine["exercises"]))
+                    total_seconds = (
+                        len(routine["exercises"])
+                        * routine["sets"]
+                        * routine["exercises"][0]["duration_seconds"]
+                        + (len(routine["exercises"]) * routine["sets"] - 1)
+                        * routine["rest"]
+                    )
+                    self.assertEqual(routine["duration"], (total_seconds + 59) // 60)
+                    self.assertTrue(
+                        all(
+                            item["bodyweight"] == "No equipment"
+                            or "opposite hand" in item["bodyweight"]
+                            for item in routine["exercises"]
                         )
-                        self.assertTrue(all(item["animation"] for item in routine["exercises"]))
-                        self.assertTrue(all(item["duration_seconds"] in (30, 40) for item in routine["exercises"]))
-                        total_seconds = (
-                            len(routine["exercises"])
-                            * routine["sets"]
-                            * routine["exercises"][0]["duration_seconds"]
-                            + (len(routine["exercises"]) * routine["sets"] - 1)
-                            * routine["rest"]
-                        )
-                        self.assertEqual(routine["duration"], (total_seconds + 59) // 60)
-                        self.assertTrue(
-                            all(
-                                item["bodyweight"] == "No equipment"
-                                or "opposite hand" in item["bodyweight"]
-                                for item in routine["exercises"]
-                            )
-                        )
-                        for item in routine["exercises"]:
-                            if item["demo_id"].startswith("wger_"):
-                                demo_files = [demo_root / f"{item['demo_id']}.png"]
-                            else:
-                                demo_files = [
-                                    demo_root / item["demo_id"] / "0.jpg",
-                                    demo_root / item["demo_id"] / "1.jpg",
-                                ]
-                            self.assertTrue(all(path.is_file() for path in demo_files))
-                        self.assertTrue(all(item["sets"] in (2, 3) for item in routine["exercises"]))
-        home_chest = build_routine("chest", "beginner", "bodyweight")
-        gym_chest = build_routine("chest", "beginner", "gym")
+                    )
+                    self.assertTrue(
+                        all("gym" not in item and "gym_cue" not in item for item in routine["exercises"])
+                    )
+                    for item in routine["exercises"]:
+                        if item["demo_id"].startswith("wger_"):
+                            demo_files = [demo_root / f"{item['demo_id']}.png"]
+                        else:
+                            demo_files = [
+                                demo_root / item["demo_id"] / "0.jpg",
+                                demo_root / item["demo_id"] / "1.jpg",
+                            ]
+                        self.assertTrue(all(path.is_file() for path in demo_files))
+                    self.assertTrue(all(item["sets"] in (2, 3) for item in routine["exercises"]))
+        home_chest = build_routine("chest", "beginner")
         self.assertEqual(home_chest["exercises"][2]["name"], "Push-up")
-        self.assertEqual(home_chest, gym_chest)
+        self.assertNotIn("gym", str(home_chest).lower())
 
 
 if __name__ == "__main__":

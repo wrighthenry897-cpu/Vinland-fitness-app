@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#12362d">
-  <meta name="description" content="Vinland — build strength, one guided workout at a time.">
+  <meta name="theme-color" content="#f5f8ff">
+  <meta name="description" content="Vinland — a private training space for guided workouts and personal progress.">
   <title>{% block title %}Vinland{% endblock %} · Vinland</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=13) }}">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=31) }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -18,10 +18,10 @@
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="{{ url_for('dashboard') }}" aria-label="Vinland home">
-        <span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/><path d="M25 7h8v3h-8z" fill="#bdf26c"/></svg></span>
+        <span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/><path d="M25 7h8v3h-8z" fill="#d2b778"/></svg></span>
         <span class="brand-name">vinland<span>.</span></span>
       </a>
-      <div class="side-label">YOUR SPACE</div>
+      <div class="side-label">MEMBER SPACE</div>
       <nav class="side-nav" aria-label="Main navigation">
         <a class="nav-link {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}" title="Overview"><span class="nav-icon">⌂</span>Overview</a>
         <a class="nav-link {% if request.endpoint in ['workout_library', 'workout_guide'] %}active{% endif %}" href="{{ url_for('workout_library') }}" title="Find workouts"><span class="nav-icon">↟</span>Find workouts</a>
@@ -29,15 +29,15 @@
         <a class="nav-link {% if request.endpoint == 'progress' %}active{% endif %}" href="{{ url_for('progress') }}" title="Progress"><span class="nav-icon">⌁</span>Progress</a>
       </nav>
       <div class="sidebar-spacer"></div>
-      <div class="side-label">PREFERENCES</div>
+      <div class="side-label">YOUR ACCOUNT</div>
       <nav class="side-nav">
         <a class="nav-link {% if request.endpoint == 'profile' %}active{% endif %}" href="{{ url_for('profile') }}" title="Your profile"><span class="nav-icon">◎</span>Your profile</a>
       </nav>
       <div class="sidebar-card">
         <span class="sidebar-card-spark">✳</span>
-        <p>Small steps.<br><strong>Stronger you.</strong></p>
+        <p>Your training.<br><strong>Your own pace.</strong></p>
         <span class="sidebar-card-line"></span>
-        <span class="sidebar-card-caption">YOUR PACE IS THE RIGHT PACE</span>
+        <span class="sidebar-card-caption">PRIVATE BY DESIGN</span>
       </div>
       <div class="sidebar-user">
         <div class="avatar">{{ g.user['name'][:1]|upper }}</div>

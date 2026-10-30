@@ -17,16 +17,18 @@
       data-exercise-name="{{ exercise['name'] }}"
       data-first-position="{% if exercise['demo_id'] == 'Bird_Dog' %}first-side reach{% else %}starting{% endif %}"
       data-second-position="{% if exercise['demo_id'] == 'Bird_Dog' %}opposite-side reach{% else %}finishing{% endif %}"
+      data-first-label="{% if exercise['demo_id'] == 'Bird_Dog' %}SIDE 1{% else %}START{% endif %}"
+      data-second-label="{% if exercise['demo_id'] == 'Bird_Dog' %}SIDE 2{% else %}FINISH{% endif %}"
       data-current-frame="0"
       alt="{{ exercise['name'] }} {% if exercise['demo_id'] == 'Bird_Dog' %}first-side reach{% else %}starting position{% endif %}"
       loading="lazy"
       decoding="async"
     >
     <span class="demo-live"><i></i> MOVEMENT SEQUENCE</span>
-    <output class="demo-frame-count" aria-live="polite">01 <span>/ 05</span></output>
+    <output class="demo-frame-count" aria-live="polite"><span class="demo-frame-number">01</span><span class="demo-frame-label">START</span></output>
     <div class="demo-controls">
-      <button class="demo-step" type="button" aria-label="Advance movement demo one frame">↔</button>
-      <button class="demo-toggle" type="button" aria-pressed="false" aria-label="Pause movement demo">Ⅱ</button>
+      <button class="demo-step" type="button" aria-label="Show the finishing position">↔</button>
+      <button class="demo-toggle" type="button" aria-pressed="false" aria-label="Pause movement demo" title="Pause movement demo">Ⅱ</button>
     </div>
     {% endif %}
   </div>

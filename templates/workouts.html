@@ -6,7 +6,13 @@
   <a class="button button-primary" href="{{ url_for('new_workout') }}"><span class="plus">＋</span> Log a workout</a>
 </div>
 <section class="panel log-panel">
-  <div class="panel-heading"><div><span class="panel-overline">ALL SESSIONS</span><h2>{{ workouts|length }} {{ 'session' if workouts|length == 1 else 'sessions' }} logged</h2></div><span class="log-total-mark">VINLAND / LOG</span></div>
+  <div class="panel-heading"><div><span class="panel-overline">YOUR SESSIONS</span><h2>{{ workouts|length }} {{ 'session' if workouts|length == 1 else 'sessions' }} shown</h2></div><span class="log-total-mark">{{ total_workouts }} TOTAL</span></div>
+  <form class="log-filters" action="{{ url_for('workout_list') }}" method="get" role="search">
+    <label class="log-search"><span class="sr-only">Search workouts, notes, or exercises</span><span aria-hidden="true">⌕</span><input type="search" name="q" value="{{ search_query }}" placeholder="Search workouts, notes, or exercises"></label>
+    <label class="log-period"><span class="sr-only">Filter by date</span><select name="period"><option value="all" {% if period == 'all' %}selected{% endif %}>Any time</option><option value="30" {% if period == '30' %}selected{% endif %}>Last 30 days</option><option value="90" {% if period == '90' %}selected{% endif %}>Last 90 days</option></select></label>
+    <button class="button button-soft" type="submit">Search <span>→</span></button>
+    {% if search_query or period != 'all' %}<a class="log-clear" href="{{ url_for('workout_list') }}">Clear filters</a>{% endif %}
+  </form>
   {% if workouts %}
   <div class="table-head"><span>WORKOUT</span><span>EXERCISES</span><span>VOLUME</span><span>DURATION</span><span></span></div>
   <div class="workout-list">{% for workout in workouts %}
@@ -20,7 +26,7 @@
     </article>
   {% endfor %}</div>
   {% else %}
-  <div class="empty-state empty-state-large"><div class="empty-illustration"><span>▤</span></div><strong>No workouts yet. That’s about to change.</strong><p>Start a log to keep your training consistent and your progress visible.</p><a class="button button-primary" href="{{ url_for('new_workout') }}">Log your first workout <span>→</span></a></div>
+  <div class="empty-state empty-state-large"><div class="empty-illustration"><span>▤</span></div><strong>{% if search_query or period != 'all' %}No sessions match those filters.{% else %}No workouts yet. That’s about to change.{% endif %}</strong><p>{% if search_query or period != 'all' %}Try a different search or date range to find your sessions.{% else %}Start a log to keep your training consistent and your progress visible.{% endif %}</p>{% if search_query or period != 'all' %}<a class="button button-soft" href="{{ url_for('workout_list') }}">Clear filters</a>{% else %}<a class="button button-primary" href="{{ url_for('new_workout') }}">Log your first workout <span>→</span></a>{% endif %}</div>
   {% endif %}
 </section>
 {% endblock %}

@@ -3,13 +3,17 @@
 {% block content %}
 <div class="page-header dashboard-header">
   <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> {{ today|datetimeformat('%A, %B %d')|upper }}</div><h1>Keep showing up, <em>{{ g.user['name'].split(' ')[0] }}.</em></h1><p class="page-subtitle">Every session is a step in the right direction.</p></div>
-  <a class="button button-primary" href="{{ url_for('workout_library') }}"><span class="plus">＋</span> Find a workout</a>
+  <div class="dashboard-actions">
+    <a class="button button-primary" href="{{ url_for('workout_library') }}"><span class="plus">＋</span> Find a workout</a>
+    <a class="button button-soft" href="{{ url_for('new_workout') }}">Log a workout <span>→</span></a>
+  </div>
 </div>
 <section class="dashboard-movement-banner" aria-label="Movement inspiration">
   <div class="dashboard-banner-copy">
     <span class="banner-kicker">STRENGTH, BUILT ONE REP AT A TIME</span>
     <h2>Your next strong move<br>starts right here.</h2>
-    <p>Explore guided movement demos, find your focus, and build at a pace that feels good.</p>
+    <p>Personalised, voice-guided bodyweight sessions. No equipment to buy, no pressure to keep up—just your next move.</p>
+    <div class="banner-tags" aria-label="Workout features"><span>No equipment</span><span>Voice-guided</span><span>Your own pace</span></div>
     <a class="banner-link" href="{{ url_for('workout_library') }}">Explore the workout library <span>→</span></a>
   </div>
   <div class="dashboard-banner-art" aria-label="Exercise form illustrations">

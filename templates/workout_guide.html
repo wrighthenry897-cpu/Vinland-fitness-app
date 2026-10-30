@@ -6,7 +6,6 @@
     <form method="post" action="{{ url_for('complete_guided_workout', focus=routine['focus']) }}" id="guided-workout-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="level" value="{{ routine['level'] }}">
-      <input type="hidden" name="equipment" value="bodyweight">
       <header class="guide-preview-heading">
         <a href="{{ url_for('workout_library', focus=routine['focus'], level=routine['level']) }}">← All workouts</a>
         <span class="eyebrow"><span class="eyebrow-dot"></span> YOUR SESSION PREVIEW</span>
@@ -86,4 +85,4 @@
   </main>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/guided-workout.js', v=8) }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/guided-workout.js', v=10) }}" defer></script>{% endblock %}

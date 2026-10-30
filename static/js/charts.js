@@ -30,7 +30,7 @@
     const height = bounds.height - top - bottom;
     const maxValue = Math.max(1, ...days.map((day) => Number(day.volume) || 0));
     const roundedMax = maxValue === 0 ? 1 : maxValue * 1.12;
-    const gridColor = "#eef1ed";
+    const gridColor = "#e9e4d8";
     ctx.lineWidth = 1;
     ctx.font = "9px DM Sans, sans-serif";
     ctx.textBaseline = "middle";
@@ -43,7 +43,7 @@
       ctx.lineTo(bounds.width - right, y);
       ctx.stroke();
       if (isMonth) {
-        ctx.fillStyle = "#a1aaa4";
+        ctx.fillStyle = "#8c8b80";
         const value = Math.round(roundedMax * (1 - row / 3));
         ctx.fillText(value >= 1000 ? `${(value / 1000).toFixed(value >= 10000 ? 0 : 1)}k` : String(value), left + 3, y - 8);
       }
@@ -56,8 +56,8 @@
         y: top + height - ((Number(day.volume) || 0) / roundedMax) * height,
       }));
       const gradient = ctx.createLinearGradient(0, top, 0, top + height);
-      gradient.addColorStop(0, "rgba(243, 90, 61, .22)");
-      gradient.addColorStop(1, "rgba(243, 90, 61, 0)");
+      gradient.addColorStop(0, "rgba(176, 145, 83, .2)");
+      gradient.addColorStop(1, "rgba(176, 145, 83, 0)");
       ctx.beginPath();
       points.forEach((point, index) => {
         if (index === 0) ctx.moveTo(point.x, point.y);
@@ -75,7 +75,7 @@
         if (index === 0) ctx.moveTo(point.x, point.y);
         else ctx.lineTo(point.x, point.y);
       });
-      ctx.strokeStyle = "#e94b35";
+      ctx.strokeStyle = "#a98546";
       ctx.lineWidth = 2;
       ctx.lineJoin = "round";
       ctx.stroke();
@@ -85,7 +85,7 @@
           ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
           ctx.fillStyle = "#fff";
           ctx.fill();
-          ctx.strokeStyle = "#e94b35";
+          ctx.strokeStyle = "#a98546";
           ctx.lineWidth = 1.5;
           ctx.stroke();
         }
@@ -99,8 +99,8 @@
         const x = left + slot * index + (slot - barWidth) / 2;
         const y = top + height - barHeight;
         const gradient = ctx.createLinearGradient(0, y, 0, top + height);
-        gradient.addColorStop(0, "#ff8b67");
-        gradient.addColorStop(1, "#ffe2d5");
+        gradient.addColorStop(0, "#c2a265");
+        gradient.addColorStop(1, "#eadfca");
         ctx.beginPath();
         if (typeof ctx.roundRect === "function") ctx.roundRect(x, y, barWidth, barHeight, [4, 4, 1, 1]);
         else ctx.rect(x, y, barWidth, barHeight);
@@ -109,7 +109,7 @@
         if (day.sessions) {
           ctx.beginPath();
           ctx.arc(x + barWidth / 2, top + height + 3, 2, 0, Math.PI * 2);
-          ctx.fillStyle = "#e94b35";
+          ctx.fillStyle = "#a98546";
           ctx.fill();
         }
       });

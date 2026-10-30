@@ -256,7 +256,6 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def workout_library() -> str:
         focus = request.args.get("focus", "all")
         level = request.args.get("level", "beginner")
-        equipment = "bodyweight"
         if focus not in {"all", *FOCUSES}:
             focus = "all"
         if level not in {"beginner", "intermediate"}:
@@ -267,7 +266,6 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             routine = build_routine(
                 slug,
                 level,
-                "bodyweight",
                 guided_session_count(db, g.user["id"], slug),
             )
             routine_durations[slug] = routine["duration"]
@@ -276,7 +274,6 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             focuses=FOCUSES,
             selected_focus=focus,
             selected_level=level,
-            selected_equipment=equipment,
             routine_durations=routine_durations,
         )
 
@@ -286,12 +283,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         if focus not in FOCUSES:
             abort(404)
         level = request.args.get("level", "beginner")
-        equipment = "bodyweight"
         completed_sessions = guided_session_count(
             get_db(), g.user["id"], focus
         )
         routine = build_routine(
-            focus, level, equipment, completed_sessions
+            focus, level, completed_sessions
         )
         if routine is None:
             abort(404)
@@ -301,16 +297,14 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     @login_required
     def complete_guided_workout(focus: str) -> Any:
         level = request.form.get("level", "beginner")
-        equipment = request.form.get("equipment", "bodyweight")
         completed_sessions = guided_session_count(
             get_db(), g.user["id"], focus
         )
         routine = build_routine(
-            focus, level, equipment, completed_sessions
+            focus, level, completed_sessions
         )
         if routine is None:
             abort(404)
-        equipment = routine["equipment"]
         raw_indexes = request.form.getlist("completed_exercise[]")
         try:
             indexes = sorted({int(value) for value in raw_indexes})
@@ -319,7 +313,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         exercises = routine["exercises"]
         if not indexes or any(index < 0 or index >= len(exercises) for index in indexes):
             flash("Mark at least one movement complete to save your workout.", "error")
-            return redirect(url_for("workout_guide", focus=focus, level=level, equipment=equipment))
+            return redirect(url_for("workout_guide", focus=focus, level=level))
 
         db = get_db()
         duration = max(1, round(routine["duration"] * len(indexes) / len(exercises)))
@@ -331,7 +325,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
                 routine["title"].title(),
                 date.today().isoformat(),
                 duration,
-                f"Guided Vinland session · focus={focus} · {level} · {equipment} · "
+                f"Guided Vinland session · focus={focus} · {level} · bodyweight · "
                 f"{len(indexes)} of {len(exercises)} movements completed.",
             ),
         )
@@ -375,19 +369,56 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     @app.get("/workouts")
     @login_required
     def workout_list() -> str:
+        search_query = request.args.get("q", "").strip()[:100]
+        period = request.args.get("period", "all")
+        if period not in {"all", "30", "90"}:
+            period = "all"
+
+        conditions = ["w.user_id = ?"]
+        parameters: list[Any] = [g.user["id"]]
+        if search_query:
+            escaped_query = search_query.replace("!", "!!").replace("%", "!%").replace("_", "!_")
+            pattern = f"%{escaped_query}%"
+            conditions.append(
+                """
+                (
+                    w.title LIKE ? ESCAPE '!'
+                    OR w.notes LIKE ? ESCAPE '!'
+                    OR EXISTS (
+                        SELECT 1 FROM exercises e
+                        WHERE e.workout_id = w.id AND e.name LIKE ? ESCAPE '!'
+                    )
+                )
+                """
+            )
+            parameters.extend([pattern, pattern, pattern])
+        if period != "all":
+            start_date = date.today() - timedelta(days=int(period) - 1)
+            conditions.append("w.workout_date >= ?")
+            parameters.append(start_date.isoformat())
+        where_clause = " AND ".join(conditions)
         workouts = get_db().execute(
-            """
+            f"""
             SELECT w.id, w.title, w.workout_date, w.duration, w.notes,
                    COUNT(e.id) AS exercise_count,
                    COALESCE(SUM(e.sets * e.reps * e.weight), 0) AS volume
             FROM workouts w LEFT JOIN exercises e ON e.workout_id = w.id
-            WHERE w.user_id = ?
+            WHERE {where_clause}
             GROUP BY w.id
             ORDER BY w.workout_date DESC, w.id DESC
             """,
-            (g.user["id"],),
+            parameters,
         ).fetchall()
-        return render_template("workouts.html", workouts=workouts)
+        total_workouts = get_db().execute(
+            "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+        ).fetchone()[0]
+        return render_template(
+            "workouts.html",
+            workouts=workouts,
+            search_query=search_query,
+            period=period,
+            total_workouts=total_workouts,
+        )
 
     @app.route("/workouts/<int:workout_id>/edit", methods=["GET", "POST"])
     @login_required

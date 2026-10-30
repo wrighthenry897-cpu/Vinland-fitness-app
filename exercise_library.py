@@ -55,63 +55,58 @@ FOCUSES = {
 def movement(
     name: str,
     bodyweight: str,
-    gym: str,
     cue: str,
     target: str = "8–12 reps",
-    gym_cue: str | None = None,
 ) -> dict[str, str]:
     return {
         "name": name,
         "bodyweight": bodyweight,
-        "gym": gym,
         "cue": cue,
-        "gym_cue": gym_cue or cue,
         "target": target,
     }
 
-
 MOVEMENTS = {
     "abs": [
-        movement("Dead bug", "No equipment", "Exercise mat", "Keep your lower back gently pressed into the floor as you extend opposite arm and leg.", "8 each side"),
-        movement("Forearm plank", "No equipment", "Exercise mat", "Make a long line from head to heels; brace gently and keep breathing.", "20–40 sec"),
-        movement("Glute bridge", "No equipment", "Exercise mat", "Press through your feet and squeeze your glutes at the top without arching your back."),
-        movement("Bird dog", "No equipment", "Exercise mat", "From hands and knees, reach opposite hand and foot long; keep your hips level.", "8 each side"),
-        movement("Bent-knee reverse crunch", "No equipment", "Exercise mat", "Curl your pelvis up slowly; avoid swinging your legs for momentum.", "10–12 reps"),
+        movement("Dead bug", "No equipment", "Keep your lower back gently pressed into the floor as you extend opposite arm and leg.", "8 each side"),
+        movement("Forearm plank", "No equipment", "Make a long line from head to heels; brace gently and keep breathing.", "20–40 sec"),
+        movement("Glute bridge", "No equipment", "Press through your feet and squeeze your glutes at the top without arching your back."),
+        movement("Bird dog", "No equipment", "From hands and knees, reach opposite hand and foot long; keep your hips level.", "8 each side"),
+        movement("Bent-knee reverse crunch", "No equipment", "Curl your pelvis up slowly; avoid swinging your legs for momentum.", "10–12 reps"),
     ],
     "chest": [
-        movement("Wall push-up", "No equipment", "Bench incline push-up", "Stand arm’s length from a wall, place your palms at chest height, and bend your elbows to bring your chest toward it.", "8–12 reps", "Set a stable bar or bench at chest height. Keep your body straight and lower your chest toward the support."),
-        movement("Knee push-up", "No equipment", "Bench push-up", "Keep a straight line from shoulders to knees and lower with control.", "6–10 reps", "Place hands on a secure bench, brace your body, and lower your chest toward its edge."),
-        movement("Push-up", "No equipment", "Dumbbell floor press", "Hands just wider than shoulders; keep elbows angled and brace your body.", "6–12 reps", "Lie on the floor with a light dumbbell in each hand. Lower elbows gently to the floor, then press up."),
-        movement("Pike push-up", "No equipment", "Seated dumbbell shoulder press", "Keep your hips high and bend your elbows to lower your head between your hands.", "6–10 reps", "Sit tall, start with light dumbbells at shoulder height, and press overhead without arching your back."),
-        movement("Close-grip push-up", "No equipment", "Cable chest press", "Keep elbows close to your sides as you lower; use a smaller range if needed.", "6–10 reps", "Set the cable handles around chest height. Press forward smoothly and return without letting the stack pull you."),
+        movement("Wall push-up", "No equipment", "Stand arm’s length from a wall, place your palms at chest height, and bend your elbows to bring your chest toward it.", "8–12 reps"),
+        movement("Knee push-up", "No equipment", "Keep a straight line from shoulders to knees and lower with control.", "6–10 reps"),
+        movement("Push-up", "No equipment", "Hands just wider than shoulders; keep elbows angled and brace your body.", "6–12 reps"),
+        movement("Pike push-up", "No equipment", "Keep your hips high and bend your elbows to lower your head between your hands.", "6–10 reps"),
+        movement("Close-grip push-up", "No equipment", "Keep elbows close to your sides as you lower; use a smaller range if needed.", "6–10 reps"),
     ],
     "back": [
-        movement("Prone W raise", "No equipment", "Incline bench W raise", "Lie face down, draw shoulder blades gently together, and lift your hands into a W.", "8–12 reps", "Set a low incline and use very light dumbbells. Draw elbows into a W and avoid shrugging."),
-        movement("Reverse snow angel", "No equipment", "Cable reverse fly", "Lie face down and sweep straight arms from your sides overhead without shrugging.", "8–12 reps", "With light cables at chest height, open your arms out to the sides and return slowly."),
-        movement("Bird dog", "No equipment", "One-arm dumbbell row", "From hands and knees, reach opposite hand and foot long; keep your hips level.", "8 each side", "Support one hand on a bench, keep your back long, and row a light dumbbell toward your hip."),
-        movement("Superman pull-down", "No equipment", "Lat pull-down machine", "Lie face down, lift your chest slightly, and draw your elbows toward your ribs.", "8–10 reps", "Sit tall, hold the bar wider than shoulder-width, and pull it toward your upper chest without rocking."),
-        movement("Prone cobra hold", "No equipment", "Cable seated row", "Lie face down, draw your shoulder blades back, and gently lift your chest and hands without straining your neck.", "20–30 sec", "Sit upright, row the handle toward your lower ribs, and return slowly without rounding your back."),
+        movement("Prone W raise", "No equipment", "Lie face down, draw shoulder blades gently together, and lift your hands into a W.", "8–12 reps"),
+        movement("Reverse snow angel", "No equipment", "Lie face down and sweep straight arms from your sides overhead without shrugging.", "8–12 reps"),
+        movement("Bird dog", "No equipment", "From hands and knees, reach opposite hand and foot long; keep your hips level.", "8 each side"),
+        movement("Superman pull-down", "No equipment", "Lie face down, lift your chest slightly, and draw your elbows toward your ribs.", "8–10 reps"),
+        movement("Prone cobra hold", "No equipment", "Lie face down, draw your shoulder blades back, and gently lift your chest and hands without straining your neck.", "20–30 sec"),
     ],
     "arms": [
-        movement("Knee triceps push-up", "No equipment", "Cable triceps press-down", "Keep elbows tucked by your sides and lower your chest with control.", "6–10 reps", "Keep elbows close to your torso and press the handle down; return slowly."),
-        movement("Close-grip knee push-up", "No equipment", "Dumbbell triceps extension", "Place hands a little inside shoulder-width; keep elbows pointing back.", "8–12 reps", "Use light dumbbells. Keep elbows pointing up as you bend and straighten your arms."),
-        movement("Self-resisted biceps curl", "Use your opposite hand for resistance", "Dumbbell biceps curl", "Keep your upper arm still and lower slowly against gentle resistance.", "8 each side", "Keep elbows by your sides, curl light dumbbells without swinging, and lower slowly."),
-        movement("Pike shoulder tap", "No equipment", "Dumbbell lateral raise", "Keep hips lifted and shift your weight slowly before tapping the opposite shoulder.", "6 each side", "With light dumbbells, raise arms out to the sides only to a comfortable height; keep shoulders relaxed."),
-        movement("Self-resisted biceps hold", "Use your opposite hand for resistance", "Hammer curl", "Hold your elbow close to your side at about 90 degrees and press gently against your opposite hand; switch sides halfway through.", "20 sec each side", "Hold light dumbbells with palms facing inward; curl without swinging and lower under control."),
+        movement("Knee triceps push-up", "No equipment", "Keep elbows tucked by your sides and lower your chest with control.", "6–10 reps"),
+        movement("Close-grip knee push-up", "No equipment", "Place hands a little inside shoulder-width; keep elbows pointing back.", "8–12 reps"),
+        movement("Self-resisted biceps curl", "Use your opposite hand for resistance", "Keep your upper arm still and lower slowly against gentle resistance.", "8 each side"),
+        movement("Pike shoulder tap", "No equipment", "Keep hips lifted and shift your weight slowly before tapping the opposite shoulder.", "6 each side"),
+        movement("Self-resisted biceps hold", "Use your opposite hand for resistance", "Hold your elbow close to your side at about 90 degrees and press gently against your opposite hand; switch sides halfway through.", "20 sec each side"),
     ],
     "legs": [
-        movement("Bodyweight squat", "No equipment", "Goblet squat to a box", "Push your hips back, then stand by pressing through your whole foot.", "8–12 reps", "Hold one light dumbbell close to your chest. Sit your hips back toward a box, then stand smoothly."),
-        movement("Glute bridge", "No equipment", "Dumbbell glute bridge", "Press through your heels and pause to squeeze your glutes at the top.", "8–12 reps", "Place a light dumbbell securely across your hips. Press through your heels and lift without arching."),
-        movement("Reverse lunge", "No equipment", "Dumbbell reverse lunge", "Step back gently and lower only as far as feels steady.", "6–8 each side", "Hold light dumbbells at your sides, step back, and lower only as far as feels steady."),
-        movement("Hip hinge / good morning", "No equipment", "Dumbbell Romanian deadlift", "Soften your knees and send your hips back while keeping your spine long.", "8–12 reps", "Hold light dumbbells in front of your thighs. Soften your knees and hinge at the hips with a long spine."),
-        movement("Calf raise", "No equipment", "Dumbbell calf raise", "Rise onto the balls of your feet, pause briefly, then lower slowly.", "12–15 reps", "Hold light dumbbells at your sides, rise onto your toes, pause, and lower slowly."),
+        movement("Bodyweight squat", "No equipment", "Push your hips back, then stand by pressing through your whole foot.", "8–12 reps"),
+        movement("Glute bridge", "No equipment", "Press through your heels and pause to squeeze your glutes at the top.", "8–12 reps"),
+        movement("Reverse lunge", "No equipment", "Step back gently and lower only as far as feels steady.", "6–8 each side"),
+        movement("Hip hinge / good morning", "No equipment", "Soften your knees and send your hips back while keeping your spine long.", "8–12 reps"),
+        movement("Calf raise", "No equipment", "Rise onto the balls of your feet, pause briefly, then lower slowly.", "12–15 reps"),
     ],
     "full-body": [
-        movement("Bodyweight squat", "No equipment", "Goblet squat", "Push your hips back and stand tall through your whole foot.", "8–12 reps", "Hold a light dumbbell close to your chest, sit your hips back, and stand smoothly."),
-        movement("Knee push-up", "No equipment", "Dumbbell floor press", "Brace your middle and keep a straight line as you press.", "8–12 reps", "Lie on the floor with light dumbbells. Lower your elbows gently to the floor, then press up."),
-        movement("Glute bridge", "No equipment", "Dumbbell glute bridge", "Press through your feet and squeeze glutes without arching your back.", "8–12 reps", "Place a light dumbbell securely across your hips. Press through your feet and lift without arching."),
-        movement("Bird dog", "No equipment", "One-arm dumbbell row", "Reach long and keep your hips level; move slowly.", "8 each side", "Support one hand on a bench, keep your back long, and row a light dumbbell toward your hip."),
-        movement("March in place", "No equipment", "Dumbbell farmer march", "Stand tall and march at a comfortable pace while keeping your balance.", "30 sec", "Hold light dumbbells at your sides and march slowly while staying tall and balanced."),
+        movement("Bodyweight squat", "No equipment", "Push your hips back and stand tall through your whole foot.", "8–12 reps"),
+        movement("Knee push-up", "No equipment", "Brace your middle and keep a straight line as you press.", "8–12 reps"),
+        movement("Glute bridge", "No equipment", "Press through your feet and squeeze glutes without arching your back.", "8–12 reps"),
+        movement("Bird dog", "No equipment", "Reach long and keep your hips level; move slowly.", "8 each side"),
+        movement("March in place", "No equipment", "Stand tall and march at a comfortable pace while keeping your balance.", "30 sec"),
     ],
 }
 
@@ -228,14 +223,10 @@ def animation_pattern(name: str, focus: str, index: int) -> str:
 def build_routine(
     focus: str,
     level: str = "beginner",
-    equipment: str = "bodyweight",
     completed_sessions: int = 0,
 ) -> dict[str, object] | None:
     if focus not in FOCUSES or level not in {"beginner", "intermediate"}:
         return None
-    if equipment not in {"bodyweight", "gym"}:
-        return None
-    equipment = "bodyweight"
     category = FOCUSES[focus]
     is_beginner = level == "beginner"
     completed_sessions = max(0, completed_sessions)
@@ -276,7 +267,7 @@ def build_routine(
         "category": category,
         "level": level,
         "progression_sessions": completed_sessions,
-        "equipment": equipment,
+        "equipment": "bodyweight",
         "title": title,
         "duration": (total_seconds + 59) // 60,
         "sets": set_count,

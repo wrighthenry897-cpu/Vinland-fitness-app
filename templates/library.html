@@ -3,15 +3,18 @@
 {% block content %}
 <section class="library-hero">
   <div class="library-hero-copy">
-    <span class="eyebrow library-eyebrow"><span class="eyebrow-dot"></span> YOUR NEXT SESSION STARTS HERE</span>
-    <h1>Pick a focus.<br><em>We’ll guide the rest.</em></h1>
-    <p>Choose what you want to work on, then follow a timed, equipment-free session with clear voice cues and in-app movement demos.</p>
-    <a class="button button-primary" href="#workout-finder">Explore workouts <span>↓</span></a>
+    <span class="eyebrow library-eyebrow"><span class="eyebrow-dot"></span> YOUR PRIVATE TRAINING COLLECTION</span>
+    <h1>Find your focus.<br><em>Own your strength.</em></h1>
+    <p>Choose a guided session, learn each movement, and train at your own pace. Every routine is made for bodyweight training—no equipment needed.</p>
+    <div class="library-promise"><span>No equipment</span><span>Move at your pace</span><span>Guided form cues</span></div>
+    <a class="button button-primary" href="#workout-finder">Choose your session <span>↓</span></a>
   </div>
   <div class="library-hero-art" aria-hidden="true">
     <span class="hero-art-label">TRAINING / {{ today|datetimeformat('%Y') }}</span>
     <div class="hero-orbit hero-orbit-one"></div><div class="hero-orbit hero-orbit-two"></div>
-    <span class="hero-art-symbol">V</span><span class="hero-art-star">✳</span>
+    <figure class="hero-movement hero-movement-one"><img src="{{ url_for('static', filename='exercise-demos/Pushups/0.jpg') }}" alt="" loading="eager" decoding="async"><figcaption>BODYWEIGHT STRENGTH</figcaption></figure>
+    <figure class="hero-movement hero-movement-two"><img src="{{ url_for('static', filename='exercise-demos/Chair_Squat/0.jpg') }}" alt="" loading="eager" decoding="async"><figcaption>TRAIN ANYWHERE</figcaption></figure>
+    <span class="hero-art-star">✳</span>
     <span class="hero-art-caption">ONE REP AT A TIME</span>
   </div>
 </section>
@@ -19,21 +22,23 @@
 <section class="library-section" id="workout-finder">
   <div class="library-section-title">
     <div><span class="panel-overline">BUILT AROUND YOU</span><h2>What would you like to train?</h2></div>
-    <span class="library-count">06 FOCUSES</span>
+    <span class="library-count">{{ focuses|length }} FOCUSES · NO EQUIPMENT</span>
   </div>
   <form class="library-filters" action="{{ url_for('workout_library') }}" method="get">
     <label><span>FOCUS AREA</span><select name="focus"><option value="all" {% if selected_focus == 'all' %}selected{% endif %}>All areas</option>{% for slug, focus in focuses.items() %}<option value="{{ slug }}" {% if selected_focus == slug %}selected{% endif %}>{{ focus.name }}</option>{% endfor %}</select></label>
     <label><span>YOUR LEVEL</span><select name="level"><option value="beginner" {% if selected_level == 'beginner' %}selected{% endif %}>Beginner</option><option value="intermediate" {% if selected_level == 'intermediate' %}selected{% endif %}>Intermediate</option></select></label>
-    <input type="hidden" name="equipment" value="bodyweight">
     <button class="button button-soft" type="submit">Show workouts <span>→</span></button>
   </form>
   <div class="focus-grid">
     {% for slug, focus in focuses.items() if selected_focus == 'all' or selected_focus == slug %}
-    <article class="focus-card focus-{{ focus.color }}">
+    <article class="focus-card focus-{{ focus.color }} has-photo-art focus-{{ slug }}">
+      <div class="focus-photo-art" aria-hidden="true">
+        <img src="{{ url_for('static', filename='images/workout-focus/' ~ slug ~ '.jpg') }}" alt="" loading="lazy" decoding="async">
+      </div>
       <div class="focus-card-top"><span class="focus-icon">{{ focus.icon }}</span><span class="focus-kicker">{{ focus.short }} / VINLAND</span></div>
       <h3>{{ focus.name }}</h3><p>{{ focus.description }}</p>
-      <div class="focus-card-meta"><span>◷ &nbsp;{{ routine_durations[slug] }} min</span><span>▤ &nbsp;5 movements</span><span>{{ selected_level|title }}</span></div>
-      <a class="focus-card-link" href="{{ url_for('workout_guide', focus=slug, level=selected_level, equipment='bodyweight') }}">See this workout <span>↗</span></a>
+      <div class="focus-card-meta"><span>◷ &nbsp;{{ routine_durations[slug] }} min</span><span>▤ &nbsp;5 movements</span><span>{{ selected_level|title }} · No equipment</span></div>
+      <a class="focus-card-link" href="{{ url_for('workout_guide', focus=slug, level=selected_level) }}">See this workout <span>↗</span></a>
     </article>
     {% endfor %}
   </div>

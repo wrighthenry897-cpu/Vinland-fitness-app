@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Rank path{% endblock %}
+{% block content %}
+<div class="page-header">
+  <div><div class="eyebrow page-eyebrow"><span class="eyebrow-dot"></span> YOUR VINLAND JOURNEY</div><h1>Rank <em>path.</em></h1><p class="page-subtitle">Every workout earns XP. Every rank brings a new crest.</p></div>
+  <a class="button button-soft" href="{{ url_for('dashboard') }}">Back to overview <span>→</span></a>
+</div>
+<section class="rank-path-summary" aria-label="Current rank progress">
+  <div class="rank-path-mascot" aria-hidden="true">{{ ranks|selectattr('status', 'equalto', 'current')|map(attribute='mascot')|first }}</div>
+  <div class="rank-path-summary-copy">
+    <span class="panel-overline">CURRENT RANK · LEVEL {{ player['level'] }}</span>
+    <h2>{{ player['rank'] }}</h2>
+    <p>{{ player['xp'] }} total XP · {{ player['xp_in_level'] }} / {{ player['xp_per_level'] }} XP toward your next level</p>
+    <div class="player-xp-track" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="{{ player['xp_per_level'] }}" aria-valuenow="{{ player['xp_in_level'] }}"><span style="width: {{ player['progress_percent'] }}%"></span></div>
+  </div>
+  {% set next_rank = ranks|selectattr('status', 'equalto', 'locked')|first %}
+  {% if next_rank %}<div class="rank-next-unlock"><strong>{{ next_rank['xp_remaining'] }} XP</strong><span>to {{ next_rank['name'] }}</span></div>{% else %}<div class="rank-next-unlock"><strong>MAX RANK</strong><span>True Warrior</span></div>{% endif %}
+</section>
+<section class="rank-path-list" aria-label="All ranks">
+  {% for rank in ranks %}
+  <article class="rank-path-card rank-path-{{ rank['status'] }}" {% if rank['status'] == 'current' %}aria-current="step"{% endif %}>
+    <div class="rank-mascot" aria-hidden="true">{{ rank['mascot'] }}</div>
+    <div class="rank-path-info">
+      <span class="rank-path-level">RANK {{ rank['level'] }} · {{ rank['required_xp'] }} XP</span>
+      <h2>{{ rank['name'] }}</h2>
+      <span class="rank-badge"><span aria-hidden="true">{{ rank['badge_symbol'] }}</span> {{ rank['badge'] }} badge</span>
+    </div>
+    <div class="rank-path-status">
+      {% if rank['status'] == 'current' %}<span class="rank-status-current">YOUR RANK</span>
+      {% elif rank['status'] == 'unlocked' %}<span class="rank-status-unlocked">UNLOCKED</span>
+      {% else %}<strong>{{ rank['xp_remaining'] }} XP</strong><span>to unlock</span>{% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</section>
+{% endblock %}

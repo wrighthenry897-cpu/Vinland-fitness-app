@@ -14,6 +14,7 @@ from typing import Any, Callable, TypeVar
 from flask import (
     Flask,
     abort,
+    current_app,
     flash,
     g,
     redirect,
@@ -27,6 +28,80 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from exercise_library import FOCUSES, build_routine
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+XP_PER_WORKOUT = 100
+XP_PER_LEVEL = 300
+PLAYER_RANKS = (
+    "Ironbound",
+    "Battle-Hardened",
+    "Stormforged",
+    "Legend of Vinland",
+    "True Warrior",
+)
+PLAYER_RANK_BADGES = (
+    ("🐺", "Iron Wolf", "⚒"),
+    ("🐻", "War Bear", "⚔"),
+    ("🦅", "Storm Raven", "ϟ"),
+    ("🐉", "Vinland Dragon", "♜"),
+    ("🦁", "True Warrior Crest", "♛"),
+)
+
+
+def calculate_player_progress(session_count: int) -> dict[str, int | str]:
+    sessions = max(0, session_count)
+    xp = sessions * XP_PER_WORKOUT
+    level = xp // XP_PER_LEVEL + 1
+    xp_in_level = xp % XP_PER_LEVEL
+    return {
+        "sessions": sessions,
+        "xp": xp,
+        "level": level,
+        "rank": PLAYER_RANKS[min(level - 1, len(PLAYER_RANKS) - 1)],
+        "xp_in_level": xp_in_level,
+        "xp_to_next": XP_PER_LEVEL - xp_in_level,
+        "progress_percent": xp_in_level * 100 // XP_PER_LEVEL,
+        "xp_per_workout": XP_PER_WORKOUT,
+        "xp_per_level": XP_PER_LEVEL,
+    }
+
+
+def build_rank_progression(xp: int) -> list[dict[str, int | str]]:
+    current_rank_index = min(max(0, xp) // XP_PER_LEVEL, len(PLAYER_RANKS) - 1)
+    ranks = []
+    for index, (rank, (mascot, badge, badge_symbol)) in enumerate(
+        zip(PLAYER_RANKS, PLAYER_RANK_BADGES)
+    ):
+        required_xp = index * XP_PER_LEVEL
+        ranks.append(
+            {
+                "name": rank,
+                "mascot": mascot,
+                "badge": badge,
+                "badge_symbol": badge_symbol,
+                "level": index + 1,
+                "required_xp": required_xp,
+                "xp_remaining": max(0, required_xp - xp),
+                "status": (
+                    "current"
+                    if index == current_rank_index
+                    else "unlocked"
+                    if index < current_rank_index
+                    else "locked"
+                ),
+            }
+        )
+    return ranks
+
+
+def flash_player_level_up(previous_sessions: int, current_sessions: int) -> None:
+    previous_level = calculate_player_progress(previous_sessions)["level"]
+    current_progress = calculate_player_progress(current_sessions)
+    if current_progress["level"] > previous_level:
+        flash(
+            f"Level up! You reached Level {current_progress['level']} "
+            f"and earned the {current_progress['rank']} rank.",
+            "success",
+        )
 
 
 def guided_session_count(db: sqlite3.Connection, user_id: int, focus: str) -> int:
@@ -104,7 +179,18 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
     def inject_template_state() -> dict[str, Any]:
         if "csrf_token" not in session:
             session["csrf_token"] = secrets.token_urlsafe(32)
-        return {"csrf_token": session["csrf_token"], "today": date.today().isoformat()}
+        player = getattr(g, "player_progress", None)
+        if g.user is not None and player is None:
+            session_count = get_db().execute(
+                "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+            ).fetchone()[0]
+            player = calculate_player_progress(session_count)
+            g.player_progress = player
+        return {
+            "csrf_token": session["csrf_token"],
+            "today": date.today().isoformat(),
+            "player": player,
+        }
 
     @app.template_filter("datetimeformat")
     def format_date(value: str, date_format: str = "%b %d, %Y") -> str:
@@ -187,15 +273,19 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             ).fetchall(),
             today,
         )
+        total_workouts = db.execute(
+            "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+        ).fetchone()[0]
+        player = calculate_player_progress(total_workouts)
+        g.player_progress = player
         return render_template(
             "dashboard.html",
             stats=stats,
             chart_days=chart_days,
             recent=recent,
             streak=streak,
-            total_workouts=db.execute(
-                "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
-            ).fetchone()[0],
+            total_workouts=total_workouts,
+            player=player,
         )
 
     @app.route("/register", methods=["GET", "POST"])
@@ -235,7 +325,15 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             user = get_db().execute(
                 "SELECT id, password_hash FROM users WHERE email = ?", (email,)
             ).fetchone()
-            if user is None or not check_password_hash(user["password_hash"], password):
+            if user is None:
+                current_app.logger.warning(
+                    "Sign-in rejected because no account matched the submitted email."
+                )
+                flash("That email and password combination didn’t match.", "error")
+            elif not check_password_hash(user["password_hash"], password):
+                current_app.logger.warning(
+                    "Sign-in rejected because the password hash did not match."
+                )
                 flash("That email and password combination didn’t match.", "error")
             else:
                 session.clear()
@@ -262,19 +360,28 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             level = "beginner"
         db = get_db()
         routine_durations = {}
+        routine_progress = {}
         for slug in FOCUSES:
+            completed_sessions = guided_session_count(db, g.user["id"], slug)
             routine = build_routine(
                 slug,
                 level,
-                guided_session_count(db, g.user["id"], slug),
+                completed_sessions,
             )
             routine_durations[slug] = routine["duration"]
+            routine_progress[slug] = {
+                "stage": routine["progression_stage"],
+                "stages": routine["progression_stages"],
+                "sessions": completed_sessions,
+                "next_stage_unlocked": routine["next_stage_unlocked"],
+            }
         return render_template(
             "library.html",
             focuses=FOCUSES,
             selected_focus=focus,
             selected_level=level,
             routine_durations=routine_durations,
+            routine_progress=routine_progress,
         )
 
     @app.get("/library/<focus>")
@@ -316,6 +423,9 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             return redirect(url_for("workout_guide", focus=focus, level=level))
 
         db = get_db()
+        previous_sessions = db.execute(
+            "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+        ).fetchone()[0]
         duration = max(1, round(routine["duration"] * len(indexes) / len(exercises)))
         cursor = db.execute(
             "INSERT INTO workouts (user_id, title, workout_date, duration, notes) "
@@ -344,6 +454,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         )
         db.commit()
         flash("Session complete — your workout was added to your training log.", "success")
+        flash_player_level_up(previous_sessions, previous_sessions + 1)
         return redirect(url_for("workout_list"))
 
     @app.route("/workouts/new", methods=["GET", "POST"])
@@ -355,6 +466,9 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
                 flash(error, "error")
                 return render_template("workout_form.html", mode="new", workout=data, exercises=exercises)
             db = get_db()
+            previous_sessions = db.execute(
+                "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+            ).fetchone()[0]
             cursor = db.execute(
                 "INSERT INTO workouts (user_id, title, workout_date, duration, notes) "
                 "VALUES (?, ?, ?, ?, ?)",
@@ -363,6 +477,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             insert_exercises(db, cursor.lastrowid, exercises)
             db.commit()
             flash("Workout saved. Nice work showing up.", "success")
+            flash_player_level_up(previous_sessions, previous_sessions + 1)
             return redirect(url_for("workout_list"))
         return render_template("workout_form.html", mode="new", workout={}, exercises=[{}])
 
@@ -510,6 +625,21 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             (g.user["id"], start.isoformat(), today.isoformat()),
         ).fetchone()
         return render_template("progress.html", days=days, totals=totals)
+
+    @app.get("/ranks")
+    @login_required
+    def rank_progression() -> str:
+        player = calculate_player_progress(
+            get_db().execute(
+                "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+            ).fetchone()[0]
+        )
+        g.player_progress = player
+        return render_template(
+            "rank_progression.html",
+            ranks=build_rank_progression(player["xp"]),
+            player=player,
+        )
 
     @app.route("/profile", methods=["GET", "POST"])
     @login_required

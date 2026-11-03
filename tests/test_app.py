@@ -55,6 +55,19 @@ class VinlandAppTests(unittest.TestCase):
             "exercise_weight[]": ["60", "30"],
         }
 
+    def test_each_workout_focus_has_its_own_card_color(self) -> None:
+        from exercise_library import FOCUSES
+
+        colors = [focus["color"] for focus in FOCUSES.values()]
+        self.assertEqual(len(colors), len(set(colors)))
+        self.register()
+        library = self.client.get("/library?focus=all&level=beginner")
+        for slug, focus in FOCUSES.items():
+            self.assertIn(
+                f"focus-{focus['color']} has-photo-art focus-{slug}".encode(),
+                library.data,
+            )
+
     def test_registration_login_and_private_dashboard(self) -> None:
         self.register()
         self.assertIn(b"Your week, in motion", self.client.get("/").data)
@@ -62,6 +75,54 @@ class VinlandAppTests(unittest.TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, 302)
         self.assertIn("/login", response.location)
+
+        restarted_app = create_app(
+            {
+                "TESTING": True,
+                "SECRET_KEY": "test-key",
+                "DATABASE_PATH": self.app.config["DATABASE_PATH"],
+            }
+        )
+        restarted_client = restarted_app.test_client()
+        login_page = restarted_client.get("/login")
+        self.assertEqual(login_page.status_code, 200)
+        with restarted_client.session_transaction() as session:
+            csrf_token = session["csrf_token"]
+        response = restarted_client.post(
+            "/login",
+            data={
+                "csrf_token": csrf_token,
+                "email": "ALEX@example.com",
+                "password": "a-strong-password",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/", response.location)
+        self.assertIn(b"Your week, in motion", restarted_client.get("/").data)
+
+    def test_login_failure_logs_reason_without_credentials(self) -> None:
+        self.register()
+        self.client.post("/logout", data={"csrf_token": self.token()})
+        login_page = self.client.get("/login")
+        self.assertEqual(login_page.status_code, 200)
+        with self.client.session_transaction() as session:
+            csrf_token = session["csrf_token"]
+
+        with self.assertLogs("app", level="WARNING") as captured:
+            response = self.client.post(
+                "/login",
+                data={
+                    "csrf_token": csrf_token,
+                    "email": "alex@example.com",
+                    "password": "incorrect-password",
+                },
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"didn\xe2\x80\x99t match", response.data)
+        self.assertIn("password hash did not match", captured.output[0])
+        self.assertNotIn("alex@example.com", captured.output[0])
+        self.assertNotIn("incorrect-password", captured.output[0])
 
     def test_workout_create_edit_delete_and_progress(self) -> None:
         self.register()
@@ -242,6 +303,7 @@ class VinlandAppTests(unittest.TestCase):
         self.assertEqual(library.status_code, 200)
         self.assertIn(b"Abs &amp; core", library.data)
         self.assertIn(b"No equipment", library.data)
+        self.assertIn(b"STAGE 1 / 8", library.data)
         self.assertNotIn(b"<h3>Legs &amp; glutes</h3>", library.data)
 
         all_focuses = self.client.get("/library?focus=all&level=beginner")
@@ -256,6 +318,11 @@ class VinlandAppTests(unittest.TestCase):
         guide = self.client.get("/library/abs?level=beginner")
         self.assertEqual(guide.status_code, 200)
         self.assertIn(b"MOVEMENT SEQUENCE", guide.data)
+        self.assertIn(
+            b'data-demo-start="/static/exercise-demos/Dead_Bug/0.jpg"',
+            guide.data,
+        )
+        self.assertIn(b"STAGE 1 / 8", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/0.jpg", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/1.jpg", guide.data)
         self.assertIn(b'class="demo-frame-number">01</span>', guide.data)
@@ -351,9 +418,15 @@ class VinlandAppTests(unittest.TestCase):
         guide = self.client.get("/library/abs?level=beginner")
         self.assertEqual(guide.status_code, 200)
         self.assertIn(b"SESSION 2", guide.data)
+        self.assertIn(b"STAGE 2 / 8", guide.data)
+        self.assertIn(b"Forearm plank", guide.data)
         self.assertIn(b'data-duration="35"', guide.data)
 
         from exercise_library import build_routine
+        next_arms_session = build_routine("arms", "beginner", completed_sessions=2)
+        self.assertTrue(
+            all(item["demo_id"] != "wger_pike_pushups" for item in next_arms_session["exercises"])
+        )
 
         fourth_session = build_routine("abs", "beginner", completed_sessions=3)
         self.assertEqual(fourth_session["sets"], 3)
@@ -361,6 +434,71 @@ class VinlandAppTests(unittest.TestCase):
         capped = build_routine("abs", "beginner", completed_sessions=20)
         self.assertEqual(capped["sets"], 4)
         self.assertEqual(capped["work_seconds"], 50)
+
+    def test_workouts_award_xp_and_level_up_across_save_methods(self) -> None:
+        from app import build_rank_progression, calculate_player_progress
+
+        self.register()
+        self.assertEqual(calculate_player_progress(0)["level"], 1)
+        self.assertEqual(calculate_player_progress(2)["xp_to_next"], 100)
+        self.assertEqual(
+            [calculate_player_progress(sessions)["rank"] for sessions in (0, 3, 6, 9, 12)],
+            ["Ironbound", "Battle-Hardened", "Stormforged", "Legend of Vinland", "True Warrior"],
+        )
+        self.assertEqual(calculate_player_progress(12)["rank"], "True Warrior")
+        self.assertEqual(calculate_player_progress(100)["rank"], "True Warrior")
+        rank_path = build_rank_progression(200)
+        self.assertEqual(rank_path[0]["status"], "current")
+        self.assertEqual(rank_path[1]["xp_remaining"], 100)
+        self.assertEqual(rank_path[-1]["xp_remaining"], 1000)
+        self.assertEqual(
+            len({rank["badge_symbol"] for rank in rank_path}),
+            len(rank_path),
+        )
+
+        for title in ("First workout", "Second workout"):
+            self.client.post(
+                "/workouts/new",
+                data=self.workout_data(self.token(), title),
+                follow_redirects=True,
+            )
+
+        response = self.client.post(
+            "/library/abs/complete",
+            data={
+                "csrf_token": self.token(),
+                "level": "beginner",
+                "completed_exercise[]": ["0"],
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Level up! You reached Level 2", response.data)
+        self.assertIn(b"Battle-Hardened rank", response.data)
+
+        dashboard = self.client.get("/")
+        self.assertIn(b"300 XP earned", dashboard.data)
+        self.assertIn(b"Level 3", dashboard.data)
+        self.assertIn(b"LV 2", dashboard.data)
+        self.assertIn(b"/ranks", dashboard.data)
+
+    def test_rank_progression_page_shows_mascots_badges_and_unlock_xp(self) -> None:
+        self.register()
+        for title in ("First workout", "Second workout"):
+            self.client.post(
+                "/workouts/new",
+                data=self.workout_data(self.token(), title),
+                follow_redirects=True,
+            )
+
+        response = self.client.get("/ranks")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Rank path", response.data)
+        self.assertIn(b"Iron Wolf badge", response.data)
+        self.assertIn(b"War Bear badge", response.data)
+        self.assertIn(b"True Warrior Crest badge", response.data)
+        self.assertIn(b"100 XP", response.data)
+        self.assertIn(b"aria-label=\"All ranks\"", response.data)
 
     def test_unknown_focus_or_movement_is_not_accepted(self) -> None:
         self.register()
@@ -410,18 +548,55 @@ class VinlandAppTests(unittest.TestCase):
                         all("gym" not in item and "gym_cue" not in item for item in routine["exercises"])
                     )
                     for item in routine["exercises"]:
-                        if item["demo_id"].startswith("wger_"):
-                            demo_files = [demo_root / f"{item['demo_id']}.png"]
-                        else:
-                            demo_files = [
-                                demo_root / item["demo_id"] / "0.jpg",
-                                demo_root / item["demo_id"] / "1.jpg",
-                            ]
+                        self.assertFalse(item["demo_id"].startswith("wger_"))
+                        demo_files = [
+                            demo_root / item["demo_id"] / "0.jpg",
+                            demo_root / item["demo_id"] / "1.jpg",
+                        ]
+                        self.assertTrue(all(path.suffix == ".jpg" for path in demo_files))
                         self.assertTrue(all(path.is_file() for path in demo_files))
                     self.assertTrue(all(item["sets"] in (2, 3) for item in routine["exercises"]))
         home_chest = build_routine("chest", "beginner")
         self.assertEqual(home_chest["exercises"][2]["name"], "Push-up")
         self.assertNotIn("gym", str(home_chest).lower())
+
+    def test_each_focus_rotates_through_progressively_harder_bodyweight_moves(self) -> None:
+        from exercise_library import FOCUSES, MOVEMENTS, build_routine
+
+        demo_root = Path(__file__).resolve().parents[1] / "static" / "exercise-demos"
+        for focus, movement_pool in MOVEMENTS.items():
+            with self.subTest(focus=focus):
+                routines = [
+                    build_routine(focus, "beginner", completed_sessions=session)
+                    for session in range(len(movement_pool) - 4)
+                ]
+                self.assertEqual(routines[0]["progression_stage"], 1)
+                self.assertEqual(
+                    routines[-1]["progression_stage"],
+                    routines[-1]["progression_stages"],
+                )
+                for current, following in zip(routines, routines[1:]):
+                    current_names = [item["name"] for item in current["exercises"]]
+                    next_names = [item["name"] for item in following["exercises"]]
+                    self.assertNotEqual(current_names, next_names)
+                    self.assertEqual(len(set(current_names) & set(next_names)), 4)
+                    self.assertTrue(
+                        all(item["bodyweight"] == "No equipment" for item in following["exercises"])
+                    )
+                for session, routine in enumerate(routines):
+                    self.assertEqual(
+                        routine["progression_stage"],
+                        min(session + 1, routine["progression_stages"]),
+                    )
+                    for item in routine["exercises"]:
+                        self.assertFalse(item["demo_id"].startswith("wger_"))
+                        demo_files = [
+                            demo_root / item["demo_id"] / "0.jpg",
+                            demo_root / item["demo_id"] / "1.jpg",
+                        ]
+                        self.assertTrue(all(path.suffix == ".jpg" for path in demo_files))
+                        self.assertTrue(all(path.is_file() for path in demo_files))
+        self.assertEqual(set(MOVEMENTS), set(FOCUSES))
 
 
 if __name__ == "__main__":

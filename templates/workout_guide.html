@@ -13,10 +13,12 @@
         <p>Take a look through every movement and its form guide first. Your coach and start button are waiting below the full plan.</p>
         <div class="progression-strip">
           <span>SESSION {{ routine['progression_sessions'] + 1 }}</span>
+          <span>STAGE {{ routine['progression_stage'] }} / {{ routine['progression_stages'] }}</span>
           <span>{{ routine['work_seconds'] }} SEC WORK</span>
           <span>{{ routine['sets'] }} SETS PER MOVE</span>
           <span>{{ routine['duration'] }} MIN</span>
         </div>
+        <p class="movement-unlock-note">{% if routine['next_stage_unlocked'] %}Complete this session to swap one movement for a more challenging one next time.{% else %}You’ve reached the final movement set for this focus. Keep building strength at your pace.{% endif %}</p>
         <a class="button button-primary preview-start-link" href="#guided-player">Ready? Jump to the coach <span>↓</span></a>
       </header>
       <details class="plan-details" id="workout-plan" open>
@@ -24,7 +26,7 @@
         <p class="plan-safety">Follow the timer or move at your own pace. Stop and rest if anything feels painful. Session work time increases gradually as you train, with a sensible cap.</p>
         <div class="guided-movements">
         {% for exercise in routine['exercises'] %}
-        <article class="movement-card panel" data-exercise-name="{{ exercise['name'] }}" data-exercise-cue="{{ exercise['cue'] }}" data-duration="{{ exercise['duration_seconds'] }}" data-rest="{{ exercise['rest'] }}" data-sets="{{ exercise['sets'] }}" data-demo-start="{% if exercise['demo_id'].startswith('wger_') %}{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '.png') }}{% else %}{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/0.jpg') }}{% endif %}" data-demo-end="{% if not exercise['demo_id'].startswith('wger_') %}{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/1.jpg') }}{% endif %}">
+        <article class="movement-card panel" data-exercise-name="{{ exercise['name'] }}" data-exercise-cue="{{ exercise['cue'] }}" data-duration="{{ exercise['duration_seconds'] }}" data-rest="{{ exercise['rest'] }}" data-sets="{{ exercise['sets'] }}" data-demo-start="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/0.jpg') }}" data-demo-end="{{ url_for('static', filename='exercise-demos/' ~ exercise['demo_id'] ~ '/1.jpg') }}">
           <div class="movement-number">{{ "%02d"|format(loop.index) }}</div>
           <div class="movement-content">
             <div class="movement-title-row"><div><h3>{{ exercise['name'] }}</h3><span class="movement-equipment">No equipment · {{ exercise['duration_seconds'] }} sec work</span></div><span class="movement-target">{{ exercise['sets'] }} × {{ exercise['target'] }}</span></div>

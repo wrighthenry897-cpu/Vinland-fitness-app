@@ -38,6 +38,7 @@
       <div class="focus-card-top"><span class="focus-icon">{{ focus.icon }}</span><span class="focus-kicker">{{ focus.short }} / VINLAND</span></div>
       <h3>{{ focus.name }}</h3><p>{{ focus.description }}</p>
       <div class="focus-card-meta"><span>◷ &nbsp;{{ routine_durations[slug] }} min</span><span>▤ &nbsp;5 movements</span><span>{{ selected_level|title }} · No equipment</span></div>
+      <div class="focus-progression"><span class="progression-stage">STAGE {{ routine_progress[slug]['stage'] }} / {{ routine_progress[slug]['stages'] }}</span><span>{{ 'New movements next session' if routine_progress[slug]['next_stage_unlocked'] else 'Final movement set' }}</span></div>
       <a class="focus-card-link" href="{{ url_for('workout_guide', focus=slug, level=selected_level) }}">See this workout <span>↗</span></a>
     </article>
     {% endfor %}

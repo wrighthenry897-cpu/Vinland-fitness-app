@@ -22,6 +22,19 @@
     <span class="banner-art-spark" aria-hidden="true">✳</span>
   </div>
 </section>
+<section class="player-progress-card" aria-labelledby="player-progress-title">
+  <div class="player-level-emblem" aria-hidden="true"><span>LV</span><strong>{{ player['level'] }}</strong></div>
+  <div class="player-progress-copy">
+    <span class="player-rank-kicker">YOUR TRAINING RANK · {{ player['rank']|upper }}</span>
+    <h2 id="player-progress-title">{{ player['rank'] }}</h2>
+    <p>{{ player['xp'] }} XP earned · {{ player['xp_per_workout'] }} XP for every workout saved</p>
+    <div class="player-xp-track" role="progressbar" aria-label="Progress to next level" aria-valuemin="0" aria-valuemax="{{ player['xp_per_level'] }}" aria-valuenow="{{ player['xp_in_level'] }}">
+      <span style="width: {{ player['progress_percent'] }}%"></span>
+    </div>
+    <small>{{ player['xp_in_level'] }} / {{ player['xp_per_level'] }} XP · {{ player['xp_to_next'] }} XP to Level {{ player['level'] + 1 }}</small>
+  </div>
+  <a class="player-rank-link" href="{{ url_for('rank_progression') }}">View rank path <span>→</span></a>
+</section>
 <section class="stat-grid" aria-label="Your weekly stats">
   <article class="stat-card"><div class="stat-top"><span class="stat-label">SESSIONS THIS WEEK</span><span class="stat-icon mint-icon">▤</span></div><div class="stat-value">{{ stats['sessions'] }}<small> / 7 days</small></div><div class="stat-foot"><span class="stat-foot-dot"></span> {{ total_workouts }} total sessions logged</div></article>
   <article class="stat-card"><div class="stat-top"><span class="stat-label">TRAINING VOLUME</span><span class="stat-icon peach-icon">↗</span></div><div class="stat-value">{{ "{:,.0f}".format(stats['volume']) }}<small> kg moved</small></div><div class="stat-foot">Across all your lifts this week</div></article>

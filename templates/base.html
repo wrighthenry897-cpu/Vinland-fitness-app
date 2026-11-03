@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f8ff">
+  <meta name="theme-color" content="#19263c">
   <meta name="description" content="Vinland — a private training space for guided workouts and personal progress.">
   <title>{% block title %}Vinland{% endblock %} · Vinland</title>
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=31) }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css', v=40) }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">
@@ -28,6 +28,7 @@
         <a class="nav-link {% if request.endpoint in ['workout_list', 'new_workout', 'edit_workout'] %}active{% endif %}" href="{{ url_for('workout_list') }}" title="Training log"><span class="nav-icon">▤</span>Training log</a>
         <a class="nav-link {% if request.endpoint == 'progress' %}active{% endif %}" href="{{ url_for('progress') }}" title="Progress"><span class="nav-icon">⌁</span>Progress</a>
       </nav>
+      {% if player %}<a class="sidebar-player-rank" href="{{ url_for('rank_progression') }}" aria-label="Level {{ player['level'] }}, {{ player['rank'] }} rank. View rank progression"><span class="sidebar-rank-level">LV {{ player['level'] }}</span><span class="sidebar-rank-copy"><small>YOUR RANK</small><strong>{{ player['rank'] }}</strong></span></a>{% endif %}
       <div class="sidebar-spacer"></div>
       <div class="side-label">YOUR ACCOUNT</div>
       <nav class="side-nav">
@@ -51,6 +52,7 @@
     <main class="main-content">
       <header class="mobile-header">
         <a class="brand" href="{{ url_for('dashboard') }}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/></svg></span><span class="brand-name">vinland<span>.</span></span></a>
+        {% if player %}<a class="mobile-player-rank" href="{{ url_for('rank_progression') }}" title="{{ player['rank'] }} rank — view progression"><span>LV</span> {{ player['level'] }}</a>{% endif %}
         <button class="mobile-menu-button" id="menu-toggle" aria-label="Open navigation" aria-controls="sidebar" aria-expanded="false" title="Open navigation">☰</button>
       </header>
       <div class="page-wrap">
@@ -86,7 +88,7 @@
 {% else %}
   <main class="auth-shell">
     <div class="auth-backdrop"></div>
-    <a class="auth-brand brand" href="{{ url_for('login') }}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/><path d="M25 7h8v3h-8z" fill="#bdf26c"/></svg></span><span class="brand-name">vinland<span>.</span></span></a>
+    <a class="auth-brand brand" href="{{ url_for('login') }}"><span class="brand-mark"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M8 10h7l5 16 5-16h7L22.5 32h-5z" fill="currentColor"/><path d="M25 7h8v3h-8z" fill="#ff8a45"/></svg></span><span class="brand-name">vinland<span>.</span></span></a>
     <div class="auth-layout">
       <section class="auth-story">
         <span class="eyebrow"><span class="eyebrow-dot"></span> MADE FOR THE LONG GAME</span>

@@ -359,6 +359,9 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         if level not in {"beginner", "intermediate"}:
             level = "beginner"
         db = get_db()
+        day_number = db.execute(
+            "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+        ).fetchone()[0] + 1
         routine_durations = {}
         routine_progress = {}
         for slug in FOCUSES:
@@ -380,6 +383,7 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             focuses=FOCUSES,
             selected_focus=focus,
             selected_level=level,
+            day_number=day_number,
             routine_durations=routine_durations,
             routine_progress=routine_progress,
         )
@@ -390,15 +394,43 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
         if focus not in FOCUSES:
             abort(404)
         level = request.args.get("level", "beginner")
+        try:
+            preview_offset = int(request.args.get("preview", "0"))
+        except ValueError:
+            abort(400, description="Choose a valid workout day to preview.")
         completed_sessions = guided_session_count(
             get_db(), g.user["id"], focus
         )
-        routine = build_routine(
-            focus, level, completed_sessions
-        )
+        current_routine = build_routine(focus, level, completed_sessions)
+        if current_routine is None:
+            abort(404)
+        if not 0 <= preview_offset < current_routine["progression_stages"]:
+            abort(400, description="That workout day is outside this focus rotation.")
+        routine = build_routine(focus, level, completed_sessions + preview_offset)
         if routine is None:
             abort(404)
-        return render_template("workout_guide.html", routine=routine)
+        day_number = get_db().execute(
+            "SELECT COUNT(*) FROM workouts WHERE user_id = ?", (g.user["id"],)
+        ).fetchone()[0] + 1
+        preview_days = [
+            {
+                "offset": offset,
+                "day": day_number + offset,
+                "stage": (
+                    (completed_sessions + offset)
+                    % current_routine["progression_stages"]
+                )
+                + 1,
+            }
+            for offset in range(current_routine["progression_stages"])
+        ]
+        return render_template(
+            "workout_guide.html",
+            routine=routine,
+            day_number=day_number + preview_offset,
+            preview_offset=preview_offset,
+            preview_days=preview_days,
+        )
 
     @app.post("/library/<focus>/complete")
     @login_required
@@ -453,7 +485,11 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             logged_exercises,
         )
         db.commit()
-        flash("Session complete — your workout was added to your training log.", "success")
+        flash(
+            f"Session complete — {XP_PER_WORKOUT} XP earned! "
+            "Your workout was added to your training log.",
+            "success",
+        )
         flash_player_level_up(previous_sessions, previous_sessions + 1)
         return redirect(url_for("workout_list"))
 
@@ -476,7 +512,10 @@ def create_app(test_config: dict[str, Any] | None = None) -> Flask:
             )
             insert_exercises(db, cursor.lastrowid, exercises)
             db.commit()
-            flash("Workout saved. Nice work showing up.", "success")
+            flash(
+                f"Workout saved — {XP_PER_WORKOUT} XP earned. Nice work showing up.",
+                "success",
+            )
             flash_player_level_up(previous_sessions, previous_sessions + 1)
             return redirect(url_for("workout_list"))
         return render_template("workout_form.html", mode="new", workout={}, exercises=[{}])

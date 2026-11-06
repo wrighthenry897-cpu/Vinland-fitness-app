@@ -134,6 +134,8 @@ class VinlandAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Strength day", response.data)
         self.assertIn(b"WORKOUT COMPLETE!", response.data)
+        self.assertIn(b"+100 XP", response.data)
+        self.assertIn(b"100 XP earned", response.data)
         self.assertIn(b'class="completion-celebration is-visible"', response.data)
         self.assertIn(b"2,640", self.client.get("/").data)
         self.assertIn(b"Volume over the last 30 days", self.client.get("/progress").data)
@@ -303,7 +305,9 @@ class VinlandAppTests(unittest.TestCase):
         self.assertEqual(library.status_code, 200)
         self.assertIn(b"Abs &amp; core", library.data)
         self.assertIn(b"No equipment", library.data)
-        self.assertIn(b"STAGE 1 / 8", library.data)
+        self.assertIn(b"STAGE 1 / 30", library.data)
+        self.assertIn(b'<a class="focus-card focus-mint has-photo-art focus-abs"', library.data)
+        self.assertIn(b"aria-label=\"Day 1: view Abs &amp; core workout\"", library.data)
         self.assertNotIn(b"<h3>Legs &amp; glutes</h3>", library.data)
 
         all_focuses = self.client.get("/library?focus=all&level=beginner")
@@ -318,11 +322,34 @@ class VinlandAppTests(unittest.TestCase):
         guide = self.client.get("/library/abs?level=beginner")
         self.assertEqual(guide.status_code, 200)
         self.assertIn(b"MOVEMENT SEQUENCE", guide.data)
+        self.assertIn(b"Voice &amp; delivery settings", guide.data)
+        self.assertIn(b'id="coach-voice-select"', guide.data)
+        self.assertIn(b'id="coach-style-select"', guide.data)
+        self.assertIn(b'id="coach-speed-select"', guide.data)
         self.assertIn(
             b'data-demo-start="/static/exercise-demos/Dead_Bug/0.jpg"',
             guide.data,
         )
-        self.assertIn(b"STAGE 1 / 8", guide.data)
+        self.assertIn(b"STAGE 1 / 30", guide.data)
+        self.assertIn(b"DAY&nbsp;1", guide.data)
+        self.assertIn(b"Pick a day to preview", guide.data)
+        self.assertIn(b"DAY&nbsp;1", guide.data)
+        self.assertIn(b'aria-current="page"', guide.data)
+        future_guide = self.client.get("/library/abs?level=beginner&preview=1")
+        self.assertEqual(future_guide.status_code, 200)
+        self.assertIn(b"DAY&nbsp;2", future_guide.data)
+        self.assertIn(b"UPCOMING WORKOUT PREVIEW", future_guide.data)
+        self.assertIn(b'aria-current="page"', future_guide.data)
+        self.assertIn(b"Forearm plank", future_guide.data)
+        self.assertIn(b"UPCOMING DAY PREVIEW", future_guide.data)
+        self.assertNotIn(b"Mark movement complete", future_guide.data)
+        self.assertNotIn(b'id="guided-player"', future_guide.data)
+        later_guide = self.client.get("/library/abs?level=beginner&preview=20")
+        self.assertIn(b"DAY&nbsp;21", later_guide.data)
+        self.assertIn(b"STAGE 21 / 30", later_guide.data)
+        self.assertIn(b'aria-current="page"', later_guide.data)
+        self.assertEqual(self.client.get("/library/abs?preview=30").status_code, 400)
+        self.assertEqual(self.client.get("/library/abs?preview=invalid").status_code, 400)
         self.assertIn(b"exercise-demos/Dead_Bug/0.jpg", guide.data)
         self.assertIn(b"exercise-demos/Dead_Bug/1.jpg", guide.data)
         self.assertIn(b'class="demo-frame-number">01</span>', guide.data)
@@ -386,6 +413,8 @@ class VinlandAppTests(unittest.TestCase):
             follow_redirects=True,
         )
         self.assertEqual(response.status_code, 200)
+        self.assertIn(b"+100 XP", response.data)
+        self.assertIn(b"100 XP earned", response.data)
         self.assertIn(b"Beginner Abs &amp; Core", response.data)
         self.assertIn(b"WORKOUT COMPLETE!", response.data)
         self.assertIn(b'id="completion-celebration"', response.data)
@@ -406,6 +435,10 @@ class VinlandAppTests(unittest.TestCase):
 
     def test_guided_workout_progresses_after_each_completed_session(self) -> None:
         self.register()
+        first_day = self.client.get("/library/abs?level=beginner")
+        self.assertIn(b"DAY&nbsp;1", first_day.data)
+        library = self.client.get("/library")
+        self.assertIn(b"DAY 1", library.data)
         response = self.client.post(
             "/library/abs/complete",
             data={
@@ -417,16 +450,14 @@ class VinlandAppTests(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         guide = self.client.get("/library/abs?level=beginner")
         self.assertEqual(guide.status_code, 200)
-        self.assertIn(b"SESSION 2", guide.data)
-        self.assertIn(b"STAGE 2 / 8", guide.data)
-        self.assertIn(b"Forearm plank", guide.data)
+        self.assertIn(b"DAY&nbsp;2", guide.data)
+        library = self.client.get("/library")
+        self.assertIn(b"DAY 2", library.data)
+        self.assertIn(b"STAGE 2 / 30", guide.data)
+        self.assertIn(b"Bird dog", guide.data)
         self.assertIn(b'data-duration="35"', guide.data)
 
         from exercise_library import build_routine
-        next_arms_session = build_routine("arms", "beginner", completed_sessions=2)
-        self.assertTrue(
-            all(item["demo_id"] != "wger_pike_pushups" for item in next_arms_session["exercises"])
-        )
 
         fourth_session = build_routine("abs", "beginner", completed_sessions=3)
         self.assertEqual(fourth_session["sets"], 3)
@@ -566,11 +597,15 @@ class VinlandAppTests(unittest.TestCase):
         demo_root = Path(__file__).resolve().parents[1] / "static" / "exercise-demos"
         for focus, movement_pool in MOVEMENTS.items():
             with self.subTest(focus=focus):
+                self.assertEqual(len(movement_pool), 30)
+                self.assertEqual(len({item["name"] for item in movement_pool}), 30)
+                stage_count = len(movement_pool)
                 routines = [
                     build_routine(focus, "beginner", completed_sessions=session)
-                    for session in range(len(movement_pool) - 4)
+                    for session in range(stage_count)
                 ]
                 self.assertEqual(routines[0]["progression_stage"], 1)
+                self.assertEqual(routines[0]["progression_stages"], 30)
                 self.assertEqual(
                     routines[-1]["progression_stage"],
                     routines[-1]["progression_stages"],
@@ -583,11 +618,7 @@ class VinlandAppTests(unittest.TestCase):
                     self.assertTrue(
                         all(item["bodyweight"] == "No equipment" for item in following["exercises"])
                     )
-                for session, routine in enumerate(routines):
-                    self.assertEqual(
-                        routine["progression_stage"],
-                        min(session + 1, routine["progression_stages"]),
-                    )
+                for routine in routines:
                     for item in routine["exercises"]:
                         self.assertFalse(item["demo_id"].startswith("wger_"))
                         demo_files = [
@@ -596,6 +627,20 @@ class VinlandAppTests(unittest.TestCase):
                         ]
                         self.assertTrue(all(path.suffix == ".jpg" for path in demo_files))
                         self.assertTrue(all(path.is_file() for path in demo_files))
+                rotated_names = {
+                    item["name"]
+                    for routine in routines
+                    for item in routine["exercises"]
+                }
+                self.assertEqual(rotated_names, {item["name"] for item in movement_pool})
+                next_rotation = build_routine(
+                    focus, "beginner", completed_sessions=stage_count
+                )
+                self.assertEqual(next_rotation["progression_stage"], 1)
+                self.assertEqual(
+                    [item["name"] for item in next_rotation["exercises"]],
+                    [item["name"] for item in routines[0]["exercises"]],
+                )
         self.assertEqual(set(MOVEMENTS), set(FOCUSES))
 
 

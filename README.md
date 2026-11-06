@@ -10,12 +10,13 @@ Vinland is a responsive workout coach and fitness-training journal built with Fl
 - Search training history by workout title, notes, or exercise, and filter sessions to the last 30 or 90 days.
 - Guided, equipment-free beginner and intermediate routines for abs/core, chest, back, arms, legs/glutes, and full body.
 - A preview-first workout guide that shows every movement and form demo before the guided player.
+- A voice-guided workout coach with selectable device voices, calm/balanced/upbeat delivery, and adjustable speaking speed; voice availability depends on the browser and device.
 - A timed workout player where users hear an exercise introduction and form cue before choosing to start the timer, with repeating set countdowns, rest timers, pause/skip controls, and automatic progression through the full session.
 - Gradual, per-focus progression: work intervals increase by five seconds with each completed guided session, up to a 20-second increase; sets increase every three sessions and are capped.
-- Guided bodyweight routines rotate one movement at a time toward harder variations after each completed session, with progression tracked independently for each focus.
+- Guided bodyweight routines offer 30 movements per focus across 30 stages; each new stage brings in one different movement while keeping four for continuity, then cycles back after all stages are completed.
 - Earn 100 XP for every saved workout, level up every 300 XP, and progress through warrior ranks from Ironbound to True Warrior; XP and ranks are derived from saved workout history.
 - Open the rank indicator to see current and upcoming ranks, XP needed for each unlock, and the rank-specific mascot and badge.
-- For each focus, the five-movement workout window advances after every guided session, introducing one harder bodyweight variation at a time until the final stage.
+- For each focus, the five-movement workout window advances by one movement after every guided session, giving 30 distinct five-movement combinations before the rotation restarts.
 - Bundled two-position human exercise demos with smooth cross-fades, plus manual step-through controls.
 - Mark completed movements and save the guided session directly to your training log; the saved time is adjusted to the movements completed.
 - Personal dashboard with weekly sessions, lifting volume, workout streak, and recent sessions.

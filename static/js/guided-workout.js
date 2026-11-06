@@ -5,6 +5,15 @@
   const form = document.getElementById("guided-workout-form");
   if (!form) return;
 
+  const dayRail = document.querySelector(".day-rail-scroll");
+  const selectedDay = dayRail?.querySelector(".day-rail-link.is-selected");
+  if (dayRail && selectedDay) {
+    const railBounds = dayRail.getBoundingClientRect();
+    const dayBounds = selectedDay.getBoundingClientRect();
+    dayRail.scrollLeft += dayBounds.left - railBounds.left
+      - (dayRail.clientWidth - selectedDay.clientWidth) / 2;
+  }
+
   const checks = [...form.querySelectorAll('input[name="completed_exercise[]"]')];
   const count = document.getElementById("completion-count");
   const updateCount = () => {
@@ -97,9 +106,25 @@
     const pauseButton = document.getElementById("workout-pause");
     const skipButton = document.getElementById("workout-skip");
     const voiceButton = document.getElementById("voice-toggle");
+    const voiceSelect = document.getElementById("coach-voice-select");
+    const styleSelect = document.getElementById("coach-style-select");
+    const speedSelect = document.getElementById("coach-speed-select");
     const endButton = document.getElementById("workout-end");
     const saveButton = document.getElementById("workout-save");
     const supportsVoice = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+    const voiceStorageKey = "vinland-coach-voice";
+    const deliveryStyles = {
+      balanced: { rate: 0.95, pitch: 1 },
+      calm: { rate: 0.9, pitch: 0.96 },
+      upbeat: { rate: 1, pitch: 1.05 },
+    };
+    let voicePreferences = { voiceURI: "", style: "balanced", speed: "1" };
+    try {
+      const savedPreferences = JSON.parse(window.localStorage.getItem(voiceStorageKey) || "{}");
+      voicePreferences = { ...voicePreferences, ...savedPreferences };
+    } catch (error) {
+      console.warn("Could not load saved coach voice preferences.", error);
+    }
     const circumference = 2 * Math.PI * 78;
     let exerciseIndex = 0;
     let setIndex = 0;
@@ -113,12 +138,75 @@
     let restMovesForward = false;
     let introSequence = 0;
 
+    const saveVoicePreferences = () => {
+      voicePreferences.voiceURI = voiceSelect.value;
+      voicePreferences.style = styleSelect.value;
+      voicePreferences.speed = speedSelect.value;
+      try {
+        window.localStorage.setItem(voiceStorageKey, JSON.stringify(voicePreferences));
+      } catch (error) {
+        console.warn("Could not save coach voice preferences.", error);
+      }
+    };
+
+    const availableVoices = () => window.speechSynthesis.getVoices();
+    const preferredVoice = () => {
+      const voices = availableVoices();
+      const englishVoices = voices.filter((voice) => voice.lang.toLowerCase().startsWith("en"));
+      const naturalVoice = englishVoices.find((voice) => {
+        const name = voice.name.toLowerCase();
+        return name.includes("natural") || name.includes("enhanced") || name.includes("premium");
+      });
+      return voices.find((voice) => voice.voiceURI === voiceSelect.value)
+        || naturalVoice
+        || englishVoices.find((voice) => voice.default)
+        || englishVoices[0]
+        || voices.find((voice) => voice.default)
+        || voices[0]
+        || null;
+    };
+
+    const populateVoiceOptions = () => {
+      const voices = availableVoices().sort((first, second) => {
+        const score = (voice) => {
+          const name = voice.name.toLowerCase();
+          return (voice.lang.toLowerCase().startsWith("en") ? 0 : 10)
+            + (name.includes("natural") || name.includes("enhanced") ? 0 : 1)
+            + (voice.default ? -1 : 0);
+        };
+        return score(first) - score(second) || first.name.localeCompare(second.name);
+      });
+      const selectedVoice = voicePreferences.voiceURI;
+      voiceSelect.replaceChildren(new Option("Recommended available voice", ""));
+      voices.forEach((voice) => {
+        const option = new Option(`${voice.name} (${voice.lang})`, voice.voiceURI);
+        voiceSelect.add(option);
+      });
+      voiceSelect.value = voices.some((voice) => voice.voiceURI === selectedVoice) ? selectedVoice : "";
+    };
+
+    if (supportsVoice) {
+      styleSelect.value = deliveryStyles[voicePreferences.style] ? voicePreferences.style : "balanced";
+      speedSelect.value = ["0.85", "1", "1.15"].includes(voicePreferences.speed) ? voicePreferences.speed : "1";
+      populateVoiceOptions();
+      window.speechSynthesis.addEventListener("voiceschanged", populateVoiceOptions);
+      [voiceSelect, styleSelect, speedSelect].forEach((select) => {
+        select.addEventListener("change", saveVoicePreferences);
+      });
+    } else {
+      voiceSelect.disabled = true;
+      styleSelect.disabled = true;
+      speedSelect.disabled = true;
+    }
+
     const speak = (message) => {
       if (!voiceEnabled) return;
       window.speechSynthesis.cancel();
       const instruction = new SpeechSynthesisUtterance(message);
-      instruction.rate = 0.9;
-      instruction.pitch = 1;
+      const style = deliveryStyles[styleSelect.value] || deliveryStyles.balanced;
+      instruction.voice = preferredVoice();
+      instruction.rate = style.rate * Number(speedSelect.value);
+      instruction.pitch = style.pitch;
       window.speechSynthesis.speak(instruction);
     };
 
@@ -150,10 +238,12 @@
         `Before we begin, here's a little about ${card.dataset.exerciseName}. ${exerciseIntroduction(card)}`
       );
       const cue = new SpeechSynthesisUtterance(card.dataset.exerciseCue);
-      intro.rate = 0.9;
-      cue.rate = 0.9;
-      intro.pitch = 1;
-      cue.pitch = 1;
+      const style = deliveryStyles[styleSelect.value] || deliveryStyles.balanced;
+      [intro, cue].forEach((instruction) => {
+        instruction.voice = preferredVoice();
+        instruction.rate = style.rate * Number(speedSelect.value);
+        instruction.pitch = style.pitch;
+      });
       let completed = false;
       const finishIntroduction = () => {
         if (completed || sequence !== introSequence) return;

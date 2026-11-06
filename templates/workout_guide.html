@@ -1,25 +1,44 @@
 {% extends "base.html" %}
 {% block title %}{{ routine['title']|title }} workout{% endblock %}
+{% block body_class %}workout-guide-page{% endblock %}
 {% block content %}
 <div class="guide-layout">
   <main class="guide-main">
+    <nav class="day-rail" aria-label="Preview workout days">
+      <div class="day-rail-heading"><div><span class="day-rail-kicker">YOUR TRAINING PATH</span><strong>Pick a day to preview</strong></div><span>30-DAY ROTATION</span></div>
+      <div class="day-rail-scroll">
+        {% for day in preview_days %}
+        <a class="day-rail-link{% if day['offset'] == preview_offset %} is-selected{% endif %}" href="{{ url_for('workout_guide', focus=routine['focus'], level=routine['level'], preview=day['offset']) }}"{% if day['offset'] == preview_offset %} aria-current="page"{% endif %}>
+          <span>DAY</span><strong>{{ day['day'] }}</strong><small>STAGE {{ day['stage'] }}</small>
+        </a>
+        {% endfor %}
+      </div>
+    </nav>
     <form method="post" action="{{ url_for('complete_guided_workout', focus=routine['focus']) }}" id="guided-workout-form">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <input type="hidden" name="level" value="{{ routine['level'] }}">
       <header class="guide-preview-heading">
         <a href="{{ url_for('workout_library', focus=routine['focus'], level=routine['level']) }}">← All workouts</a>
-        <span class="eyebrow"><span class="eyebrow-dot"></span> YOUR SESSION PREVIEW</span>
-        <h1>{{ routine['title']|title }}</h1>
-        <p>Take a look through every movement and its form guide first. Your coach and start button are waiting below the full plan.</p>
-        <div class="progression-strip">
-          <span>SESSION {{ routine['progression_sessions'] + 1 }}</span>
-          <span>STAGE {{ routine['progression_stage'] }} / {{ routine['progression_stages'] }}</span>
-          <span>{{ routine['work_seconds'] }} SEC WORK</span>
-          <span>{{ routine['sets'] }} SETS PER MOVE</span>
-          <span>{{ routine['duration'] }} MIN</span>
+        <div class="guide-day-hero">
+          <div class="guide-day-marker"><span>YOUR DAY</span><strong>DAY&nbsp;{{ day_number }}</strong><i>VINLAND TRAINING</i></div>
+          <div class="guide-day-copy">
+            <span class="eyebrow"><span class="eyebrow-dot"></span>{% if preview_offset %}UPCOMING WORKOUT PREVIEW{% else %}YOUR NEXT SESSION{% endif %}</span>
+            <h1>{{ routine['title']|title }}</h1>
+            <p>{% if preview_offset %}A look ahead at your exercises. Previewing this day won’t change your progress.{% else %}Your next step, built around your focus. Check the movement demos, then train at your own pace.{% endif %}</p>
+            <div class="progression-strip">
+              <span>STAGE {{ routine['progression_stage'] }} / {{ routine['progression_stages'] }}</span>
+              <span>{{ routine['work_seconds'] }} SEC WORK</span>
+              <span>{{ routine['sets'] }} SETS</span>
+              <span>{{ routine['duration'] }} MIN</span>
+            </div>
+          </div>
         </div>
-        <p class="movement-unlock-note">{% if routine['next_stage_unlocked'] %}Complete this session to swap one movement for a more challenging one next time.{% else %}You’ve reached the final movement set for this focus. Keep building strength at your pace.{% endif %}</p>
+        {% if preview_offset %}
+        <p class="movement-unlock-note">Preview only — your saved progress and current workout are unchanged.</p>
+        {% else %}
+        <p class="movement-unlock-note">{% if routine['next_stage_unlocked'] %}One new movement is waiting in your next session. Keep four familiar moves and build from there.{% else %}You’ve reached the last set in this movement rotation. Finish strong, then the rotation begins again.{% endif %}</p>
         <a class="button button-primary preview-start-link" href="#guided-player">Ready? Jump to the coach <span>↓</span></a>
+        {% endif %}
       </header>
       <details class="plan-details" id="workout-plan" open>
         <summary>Full workout plan <span>{{ routine['exercises']|length }} movements · {{ routine['duration'] }} min</span></summary>
@@ -35,16 +54,21 @@
             <div class="movement-actions">
               <button class="rest-button" type="button" data-seconds="{{ exercise['rest'] }}">⏱ <span>Rest {{ exercise['rest'] }}s</span></button>
             </div>
-            <label class="movement-done"><input type="checkbox" name="completed_exercise[]" value="{{ loop.index0 }}"><span class="custom-check">✓</span><span>Mark movement complete</span></label>
+            {% if not preview_offset %}<label class="movement-done"><input type="checkbox" name="completed_exercise[]" value="{{ loop.index0 }}"><span class="custom-check">✓</span><span>Mark movement complete</span></label>{% endif %}
           </div>
         </article>
         {% endfor %}
         </div>
+        {% if preview_offset %}
+        <div class="guided-finish"><div><strong>UPCOMING DAY PREVIEW</strong><span>Choose another day above, or return to your current workout.</span></div><a class="button button-soft" href="{{ url_for('workout_guide', focus=routine['focus'], level=routine['level']) }}">Back to current day</a></div>
+        {% else %}
         <div class="guided-finish">
           <div><strong id="completion-count">0 of {{ routine['exercises']|length }} movements complete</strong><span>Manual check-off is available if you train without the timer.</span></div>
           <button class="button button-primary" type="submit">Save completed movements <span>→</span></button>
         </div>
+        {% endif %}
       </details>
+      {% if not preview_offset %}
       <section class="guided-player panel" id="guided-player" aria-label="Guided workout player">
         <div class="player-topline">
           <div class="player-workout-name"><a href="#workout-plan">↑ Back to workout plan</a><strong>{{ routine['title']|title }} · guided session</strong><span>{{ routine['category']['short'] }} · {{ routine['level']|title }} · NO EQUIPMENT</span></div>
@@ -78,13 +102,39 @@
               <button class="player-end" id="workout-end" type="button" hidden>End session</button>
               <button class="button button-primary" id="workout-save" type="submit" hidden>Save workout <span>→</span></button>
             </div>
+            <details class="coach-voice-settings">
+              <summary>Voice &amp; delivery settings</summary>
+              <div class="coach-voice-options">
+                <label>Coach voice
+                  <select id="coach-voice-select" aria-label="Coach voice">
+                    <option value="">Recommended available voice</option>
+                  </select>
+                </label>
+                <label>Delivery
+                  <select id="coach-style-select" aria-label="Voice delivery">
+                    <option value="balanced">Balanced</option>
+                    <option value="calm">Calm</option>
+                    <option value="upbeat">Upbeat</option>
+                  </select>
+                </label>
+                <label>Speaking speed
+                  <select id="coach-speed-select" aria-label="Speaking speed">
+                    <option value="0.85">Slow</option>
+                    <option value="1" selected>Natural</option>
+                    <option value="1.15">Brisk</option>
+                  </select>
+                </label>
+              </div>
+              <p>Voice choices depend on your device and browser. Your preferences are saved on this device.</p>
+            </details>
           </div>
         </div>
         <div class="player-footer"><span id="player-up-next">UP NEXT · {{ routine['exercises'][1]['name'] }}</span><span>{{ routine['exercises']|length }} MOVEMENTS <i>·</i> {{ routine['sets'] }} SETS EACH</span></div>
       </section>
+      {% endif %}
       <a class="guide-log-link player-attribution" href="{{ url_for('static', filename='exercise-demos/ATTRIBUTIONS.md') }}" target="_blank" rel="noopener">Demo artwork credits &amp; licenses <span>↗</span></a>
     </form>
   </main>
 </div>
 {% endblock %}
-{% block scripts %}<script src="{{ url_for('static', filename='js/guided-workout.js', v=10) }}" defer></script>{% endblock %}
+{% block scripts %}<script src="{{ url_for('static', filename='js/guided-workout.js', v=12) }}" defer></script>{% endblock %}
